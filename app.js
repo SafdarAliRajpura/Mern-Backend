@@ -1,0 +1,42 @@
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const connectDB = require('./config/db');
+const bodyParser = require('body-parser');
+
+// Load env vars
+dotenv.config();
+
+// Connect to database
+connectDB().then(() => {
+  const app = express();
+
+  // Middleware
+  app.use(cors());
+  app.use(bodyParser.json({ limit: '50mb' }));
+  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+  // Route files
+  const userRoutes = require('./routes/userRoutes');
+  const authRoutes = require('./routes/authRoutes');
+  const venueRoutes = require('./routes/venueRoutes');
+  const bookingRoutes = require('./routes/bookingRoutes');
+  const reviewRoutes = require('./routes/reviewRoutes');
+
+  // Main route
+  app.get('/', (req, res) => {
+    res.send('Turf Booking API is running...');
+  });
+
+  // Mount routes
+  app.use('/api/users', userRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/venues', venueRoutes);
+  app.use('/api/bookings', bookingRoutes);
+  app.use('/api/reviews', reviewRoutes);
+
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}).catch((error) => {
+  console.log('Failed to connect to database', error);
+});

@@ -1,0 +1,12 @@
+{
+  "_id": "69947c158d1041c47b864004",
+  "userId": "65d4c8f9a4b3c2e1d0000002",
+  "turfName": "Decathlon Sports Park",
+  "sport": "Football",
+  "date": "29 Jan, 2026",
+  "timeSlot": "06:00 AM & 07:00 AM",
+  "price": 1600,
+  "status": "confirmed",
+  "createdAt": "2026-02-17T14:32:53.615Z",
+  "__v": 0
+}

@@ -1,0 +1,22 @@
+{
+  "_id": "699baf335838073101ca2207",
+  "name": "Demo Turf",
+  "location": "adads,dasdads",
+  "price": 1400,
+  "status": "ACTIVE",
+  "image": "http://10.167.104.171:5000/uploads/venue_1771810610889_733.jpg",
+  "images": [
+    "http://10.167.104.171:5000/uploads/venue_1771810610951_78.jpg",
+    "http://10.167.104.171:5000/uploads/venue_1771810610985_256.jpg",
+    "http://10.167.104.171:5000/uploads/venue_1771810610997_340.jpg"
+  ],
+  "amenities": [
+    "Floodlights",
+    "Washroom",
+    "Parking",
+    "Drinking Water"
+  ],
+  "owner": "65d4c8f9a4b3c2e1d0000001",
+  "createdAt": "2026-02-23T01:36:51.058Z",
+  "__v": 0
+}
