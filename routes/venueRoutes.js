@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { getVenues, getVenue, createVenue, updateVenueStatus } = require('../controllers/venueController');
+const { protect, authorize } = require('../middleware/authMiddleware');
 
-router.route('/').get(getVenues).post(createVenue);
-router.route('/:id').get(getVenue).patch(updateVenueStatus);
+router.get('/', getVenues);
+router.post('/', protect, authorize('partner', 'admin'), createVenue);
+router.get('/:id', getVenue);
+router.patch('/:id', protect, authorize('partner', 'admin'), updateVenueStatus);
 
 module.exports = router;

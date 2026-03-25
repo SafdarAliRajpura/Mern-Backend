@@ -22,6 +22,8 @@ connectDB().then(() => {
   const venueRoutes = require('./routes/venueRoutes');
   const bookingRoutes = require('./routes/bookingRoutes');
   const reviewRoutes = require('./routes/reviewRoutes');
+  const tournamentRoutes = require('./routes/tournamentRoutes');
+
 
   // Main route
   app.get('/', (req, res) => {
@@ -34,6 +36,8 @@ connectDB().then(() => {
   app.use('/api/venues', venueRoutes);
   app.use('/api/bookings', bookingRoutes);
   app.use('/api/reviews', reviewRoutes);
+  app.use('/api/tournaments', tournamentRoutes);
+
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -5,7 +5,7 @@ const Venue = require('../models/Venue');
 // @access  Public
 exports.getVenues = async (req, res) => {
     try {
-        const venues = await Venue.find();
+        const venues = await Venue.find().populate('owner');
         res.status(200).json({ success: true, count: venues.length, data: venues });
     } catch (error) {
         console.error(error);
@@ -18,7 +18,7 @@ exports.getVenues = async (req, res) => {
 // @access  Public
 exports.getVenue = async (req, res) => {
     try {
-        const venue = await Venue.findById(req.params.id);
+        const venue = await Venue.findById(req.params.id).populate('owner');
         if (!venue) {
             return res.status(404).json({ success: false, message: 'Venue not found' });
         }
@@ -48,9 +48,13 @@ exports.createVenue = async (req, res) => {
 exports.updateVenueStatus = async (req, res) => {
     try {
         const updates = req.body;
+        // Explicitly format for nested array override
+        const updateDoc = { $set: {} };
+        for(let key in updates) { updateDoc.$set[key] = updates[key]; }
+        
         const venue = await Venue.findByIdAndUpdate(
             req.params.id,
-            updates,
+            updateDoc,
             { new: true, runValidators: true }
         );
 
