@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const sendWelcomeEmail = require('../utils/sendEmail');
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -26,8 +27,13 @@ const registerUser = async (req, res) => {
     }
 
     try {
-        if (!first_name || !email || !phone || !password) {
-            return res.status(400).json({ success: false, message: 'Please add all fields' });
+        if (!first_name || !email || !phone) {
+            return res.status(400).json({ success: false, message: 'Please add all required profile fields' });
+        }
+        
+        // Use password requirement for non-partners or if provided
+        if (role !== 'partner' && !password) {
+            return res.status(400).json({ success: false, message: 'Password is required' });
         }
 
         // Check if user exists
@@ -36,9 +42,12 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ success: false, message: 'User already exists' });
         }
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // Hash password (only if provided - standard for users, omitted for partners now)
+        let hashedPassword = null;
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            hashedPassword = await bcrypt.hash(password, salt);
+        }
 
         // Create user
         const user = await User.create({
@@ -46,12 +55,21 @@ const registerUser = async (req, res) => {
             last_name,
             email,
             mobileNumber: phone,
-            password: hashedPassword,
+            password: hashedPassword || null, // Password is optional for pending partners
             user_profile: user_profile || null,
-            role: role || 'user'
+            role: role || 'user',
+            isApproved: role === 'partner' ? false : true // Partners must be approved
         });
 
         if (user) {
+            // Send Welcome Email (only for regular users)
+            if (user.role === 'user') {
+                sendWelcomeEmail({
+                    email: user.email,
+                    name: user.first_name || 'Champion'
+                });
+            }
+
             res.status(201).json({
                 success: true,
                 message: 'Data Inserted Successfully',
@@ -87,6 +105,11 @@ const loginUser = async (req, res) => {
 
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+
+        // Check if Approved (for Partners)
+        if (user.role === 'partner' && !user.isApproved) {
+            return res.status(403).json({ success: false, message: 'Your application is currently PENDING review by the Super Admin.' });
         }
 
         // Check password match

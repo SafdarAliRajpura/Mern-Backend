@@ -34,6 +34,7 @@ exports.getVenue = async (req, res) => {
 // @access  Public
 exports.createVenue = async (req, res) => {
     try {
+        req.body.owner = req.user.id;
         const venue = await Venue.create(req.body);
         res.status(201).json({ success: true, data: venue });
     } catch (error) {

@@ -24,7 +24,8 @@ const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error(error);
+      console.error(`JWT Error [${error.name}]:`, error.message);
+      console.log('Malformed Token Received:', token);
       return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
   }
