@@ -23,12 +23,20 @@ exports.createBooking = async (req, res) => {
 // @access  Public
 exports.getAllBookings = async (req, res) => {
     try {
-        // If it's a regular user, only show THEIR bookings
-        // If it's an admin, show all (for the admin panel)
         let query = {};
-        if (req.user && req.user.role !== 'admin') {
+        
+        // If requester is a Partner, only show bookings for THEIR venues
+        if (req.user && req.user.role === 'partner') {
+            const Venue = require('../models/Venue');
+            const myVenues = await Venue.find({ owner: req.user.id });
+            const myVenueNames = myVenues.map(v => v.name);
+            query = { turfName: { $in: myVenueNames } };
+        } 
+        // If regular user (athlete), only show THEIR bookings
+        else if (req.user && req.user.role !== 'admin') {
             query = { userId: req.user.id };
         }
+        // Admin stays empty query (returns all)
 
         const bookings = await Booking.find(query).sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: bookings });

@@ -5,7 +5,11 @@ const Venue = require('../models/Venue');
 // @access  Public
 exports.getVenues = async (req, res) => {
     try {
-        const venues = await Venue.find().populate('owner');
+        let query = {};
+        if (req.query.owner) {
+            query = { owner: req.query.owner };
+        }
+        const venues = await Venue.find(query).populate('owner');
         res.status(200).json({ success: true, count: venues.length, data: venues });
     } catch (error) {
         console.error(error);
