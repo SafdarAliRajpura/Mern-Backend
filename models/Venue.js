@@ -18,6 +18,10 @@ const venueSchema = new mongoose.Schema({
     }],
     rating: { type: Number, default: 4.5 },
     distance: { type: String, default: '2.5 km' },
+    coordinates: {
+        lat: { type: Number, default: 23.0225 }, // Default to a central location (Ahmedabad)
+        lng: { type: Number, default: 72.5714 }
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Venue', venueSchema);
