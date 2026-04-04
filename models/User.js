@@ -45,6 +45,25 @@ const userSchema = new mongoose.Schema(
     isApproved: {
       type: Boolean,
       default: true, // Default true for normal users
+    },
+    isOnboarded: {
+      type: Boolean,
+      default: false,
+    },
+    businessName: {
+      type: String,
+      required: false,
+    },
+    supportEmail: { type: String },
+    supportPhone: { type: String },
+    gstNumber: { type: String },
+    accountHolderName: { type: String },
+    accountNumber: { type: String },
+    ifscCode: { type: String },
+    brandLogo: { type: String },
+    upiId: {
+      type: String,
+      required: false,
     }
   },
   {

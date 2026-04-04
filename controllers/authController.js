@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const sendWelcomeEmail = require('../utils/sendEmail');
+const { sendWelcomeEmail } = require('../utils/sendEmail');
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -81,6 +81,7 @@ const registerUser = async (req, res) => {
                     mobileNumber: user.mobileNumber,
                     user_profile: user.user_profile,
                     role: user.role,
+                    isOnboarded: user.isOnboarded,
                     token: generateToken(user._id),
                 }
             });
@@ -127,6 +128,7 @@ const loginUser = async (req, res) => {
                     mobileNumber: user.mobileNumber,
                     user_profile: user.user_profile,
                     role: user.role,
+                    isOnboarded: user.isOnboarded,
                     token: generateToken(user._id),
                 }
             });
@@ -149,8 +151,56 @@ const getMe = async (req, res) => {
     });
 };
 
+// @desc    Onboard Partner (Update details and change state)
+// @route   PUT /api/auth/onboard
+// @access  Private
+const onboardPartner = async (req, res) => {
+    try {
+        const { 
+            businessName, supportEmail, supportPhone, 
+            gstNumber, brandLogo, 
+            accountHolderName, accountNumber, ifscCode, upiId 
+        } = req.body;
+        
+        const user = await User.findById(req.user.id);
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        
+        user.businessName = businessName;
+        user.supportEmail = supportEmail;
+        user.supportPhone = supportPhone;
+        user.gstNumber = gstNumber;
+        user.brandLogo = brandLogo;
+        user.accountHolderName = accountHolderName;
+        user.accountNumber = accountNumber;
+        user.ifscCode = ifscCode;
+        user.upiId = upiId;
+        user.isOnboarded = true;
+        
+        await user.save();
+        
+        res.status(200).json({
+            success: true,
+            message: 'Onboarding completed',
+            data: {
+                _id: user.id,
+                first_name: user.first_name,
+                isOnboarded: user.isOnboarded,
+                role: user.role,
+                token: generateToken(user._id)
+            }
+        });
+    } catch(error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getMe,
+    onboardPartner,
 };
