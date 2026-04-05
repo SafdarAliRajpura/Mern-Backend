@@ -64,6 +64,10 @@ const userSchema = new mongoose.Schema(
     upiId: {
       type: String,
       required: false,
+    },
+    websiteLink: {
+      type: String,
+      required: false,
     }
   },
   {

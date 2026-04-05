@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { sendWelcomeEmail } = require('../utils/sendEmail');
+const { sendWelcomeEmail, sendPasswordChangeAlert } = require('../utils/sendEmail');
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -198,9 +198,103 @@ const onboardPartner = async (req, res) => {
     }
 };
 
+// @desc    Update partner profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res) => {
+    try {
+        const { businessName, first_name, last_name, email, mobileNumber, websiteLink, user_profile } = req.body;
+        
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        
+        // Update fields if provided
+        if (businessName !== undefined) user.businessName = businessName;
+        if (first_name !== undefined) user.first_name = first_name;
+        if (last_name !== undefined) user.last_name = last_name;
+        if (email !== undefined) user.email = email;
+        if (mobileNumber !== undefined) user.mobileNumber = mobileNumber;
+        if (websiteLink !== undefined) user.websiteLink = websiteLink;
+        if (user_profile !== undefined) user.user_profile = user_profile;
+        
+        await user.save();
+        
+        res.status(200).json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: {
+                _id: user.id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                mobileNumber: user.mobileNumber,
+                user_profile: user.user_profile,
+                businessName: user.businessName,
+                websiteLink: user.websiteLink,
+                role: user.role,
+                isOnboarded: user.isOnboarded,
+                token: generateToken(user._id)
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Change password
+// @route   PUT /api/auth/change-password
+// @access  Private
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        const user = await User.findById(req.user.id).select('+password');
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        
+        // If user already has a password, verify current password
+        if (user.password) {
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return res.status(400).json({ success: false, message: 'Incorrect current password' });
+            }
+        }
+        
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        
+        await user.save();
+        
+        // Send alert email asynchronously
+        try {
+            sendPasswordChangeAlert({
+                email: user.email,
+                name: user.first_name || 'User'
+            });
+        } catch (emailErr) {
+            console.error('Error sending password change alert:', emailErr);
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'Password changed successfully'
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getMe,
     onboardPartner,
+    updateProfile,
+    changePassword,
 };

@@ -4,6 +4,8 @@ const venueSchema = new mongoose.Schema({
     name: { type: String, required: true },
     location: { type: String, required: true },
     price: { type: Number, required: true },
+    weekendPrice: { type: Number },
+    peakHourPrice: { type: Number },
     status: { type: String, default: 'ACTIVE' },
     image: { type: String },
     images: [{ type: String }],

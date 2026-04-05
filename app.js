@@ -23,6 +23,7 @@ connectDB().then(() => {
   const bookingRoutes = require('./routes/bookingRoutes');
   const reviewRoutes = require('./routes/reviewRoutes');
   const tournamentRoutes = require('./routes/tournamentRoutes');
+  const analyticsRoutes = require('./routes/analyticsRoutes');
 
 
   // Main route
@@ -37,6 +38,7 @@ connectDB().then(() => {
   app.use('/api/bookings', bookingRoutes);
   app.use('/api/reviews', reviewRoutes);
   app.use('/api/tournaments', tournamentRoutes);
+  app.use('/api/analytics', analyticsRoutes);
 
 
   const PORT = process.env.PORT || 5000;

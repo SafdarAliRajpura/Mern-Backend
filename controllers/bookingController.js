@@ -1,4 +1,5 @@
 const Booking = require('../models/Booking');
+const { sendBookingConfirmation } = require('../utils/sendEmail');
 
 // @route   POST /api/bookings
 // @desc    Create a new booking
@@ -10,10 +11,65 @@ exports.createBooking = async (req, res) => {
             req.body.userId = req.user.id;
             req.body.user = `${req.user.first_name || 'Champion'} ${req.user.last_name || ''}`.trim();
         }
+        // Check for double bookings (Prevent overlapping slots)
+        const { turfName, date, timeSlot } = req.body;
+        if (turfName && date && timeSlot) {
+            const conflict = await Booking.findOne({
+                turfName,
+                date,
+                timeSlot,
+                status: { $in: ['Confirmed', 'Pending'] } // Do not block if Cancelled/Rejected
+            });
+
+            if (conflict) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Slot unavailable! ${turfName} is already booked on ${date} at ${timeSlot}.` 
+                });
+            }
+        }
+
         const booking = await Booking.create(req.body);
+        
+        // Send email confirmation
+        try {
+            const email = (req.user && req.user.email) || req.body.email;
+            if (email) {
+                sendBookingConfirmation({
+                    email: email,
+                    name: (req.user && req.user.first_name) || req.body.user || 'Champion',
+                    venueName: booking.turfName,
+                    date: booking.date,
+                    timeSlot: booking.timeSlot
+                });
+            }
+        } catch (emailErr) {
+            console.error('Email confirmation error:', emailErr);
+        }
+
         res.status(201).json({ success: true, data: booking });
     } catch (error) {
         console.error("Create Booking Error:", error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @route   GET /api/bookings/public
+// @desc    Get all bookings for a specific venue for slot UI blocking
+// @access  Public
+exports.getPublicBookings = async (req, res) => {
+    try {
+        const { turfName, date } = req.query;
+        let query = { status: { $in: ['Confirmed', 'Pending'] } };
+        
+        if (turfName) query.turfName = turfName;
+        if (date) query.date = date;
+
+        // Return only the fields needed to block UI (hide user details)
+        const bookings = await Booking.find(query).select('turfName sport date timeSlot status');
+        res.status(200).json({ success: true, data: bookings });
+    } catch (error) {
+        console.error("Get Public Bookings Error:", error);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };

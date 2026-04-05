@@ -159,10 +159,82 @@ const sendPartnerRejectionEmail = ({ email, name, turfName }) => {
     transporter.sendMail(mailOptions);
 };
 
+/**
+ * Send Password Change Alert
+ */
+const sendPasswordChangeAlert = ({ email, name }) => {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM || '"Arena Pro Security" <hbrajpura110@gmail.com>',
+        to: email,
+        subject: 'Security Alert: Password Changed 🔐',
+        html: `
+            <div style="font-family: 'Segoe UI', system-ui, sans-serif; max-width: 600px; margin: auto; background-color: #0f172a; border-radius: 24px; border: 1px solid #1e293b; color: #f8fafc; overflow: hidden;">
+                <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); padding: 50px 40px; text-align: center;">
+                    <div style="display: inline-block; padding: 15px; background: rgba(139, 92, 246, 0.2); border-radius: 50%; margin-bottom: 20px;">
+                        <span style="font-size: 30px;">🔐</span>
+                    </div>
+                    <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; color: #a78bfa;">Password Updated</h1>
+                </div>
+                <div style="padding: 40px; text-align: center;">
+                    <p style="font-size: 16px; color: #cbd5e1;">Hello <strong>${name}</strong>,</p>
+                    <p style="font-size: 15px; color: #94a3b8; line-height: 1.6;">The password for your Arena Pro account was recently changed. If you made this change, you can safely ignore this email.</p>
+                    <div style="margin-top: 30px; padding: 20px; background: rgba(239, 68, 68, 0.1); border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                        <p style="margin: 0; font-size: 12px; font-weight: 700; color: #ef4444; text-transform: uppercase;">Didn't make this change?</p>
+                        <p style="margin: 5px 0 0; font-size: 12px; color: #f8fafc;">Please contact support immediately to secure your account.</p>
+                    </div>
+                </div>
+            </div>
+        `
+    };
+    transporter.sendMail(mailOptions);
+};
+
+/**
+ * Send Booking Confirmation
+ */
+const sendBookingConfirmation = ({ email, name, venueName, date, timeSlot }) => {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM || '"Arena Pro" <hbrajpura110@gmail.com>',
+        to: email,
+        subject: 'Booking Confirmed! Get Ready to Play ⚽',
+        html: `
+            <div style="font-family: 'Segoe UI', system-ui, sans-serif; max-width: 600px; margin: auto; background-color: #0f172a; border-radius: 24px; border: 1px solid #1e293b; color: #f8fafc; overflow: hidden;">
+                <div style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); padding: 50px 40px; text-align: center;">
+                    <span style="font-size: 40px; margin-bottom: 10px; display: block;">✅</span>
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase; color: #fff;">Match Confirmed</h1>
+                </div>
+                <div style="padding: 40px;">
+                    <p style="font-size: 16px; color: #cbd5e1; margin-bottom: 30px;">Hey <strong>${name}</strong>, your turf is locked in. Let's make it count.</p>
+                    
+                    <div style="background: #020617; border-radius: 16px; padding: 25px; border: 1px solid #334155;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding-bottom: 15px; color: #64748b; font-size: 12px; font-weight: 800; text-transform: uppercase;">Venue</td>
+                                <td style="padding-bottom: 15px; text-align: right; color: #fff; font-weight: 700;">${venueName}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 15px; color: #64748b; font-size: 12px; font-weight: 800; text-transform: uppercase;">Date</td>
+                                <td style="padding-bottom: 15px; text-align: right; color: #fff; font-weight: 700;">${date}</td>
+                            </tr>
+                            <tr>
+                                <td style="color: #64748b; font-size: 12px; font-weight: 800; text-transform: uppercase;">Time Slot</td>
+                                <td style="text-align: right; color: #3b82f6; font-weight: 900;">${timeSlot}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `
+    };
+    transporter.sendMail(mailOptions);
+};
+
 module.exports = {
     sendWelcomeEmail,
     sendBanEmail,
     sendUnbanEmail,
     sendPartnerApprovalEmail,
-    sendPartnerRejectionEmail
+    sendPartnerRejectionEmail,
+    sendPasswordChangeAlert,
+    sendBookingConfirmation
 };
