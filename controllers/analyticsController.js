@@ -1,6 +1,7 @@
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const Venue = require('../models/Venue');
+const Tournament = require('../models/Tournament');
 
 // @desc    Get dashboard metrics for Partner
 // @route   GET /api/analytics/dashboard
@@ -71,8 +72,39 @@ const getDashboardMetrics = async (req, res) => {
         console.error('Analytics Error:', error);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
+
+};
+
+// @desc    Get public platform statistics
+// @route   GET /api/analytics/platform-stats
+// @access  Public
+const getPlatformStats = async (req, res) => {
+    try {
+        const [totalUsers, totalVenues, totalTournaments, topVenue, recentUsers] = await Promise.all([
+            User.countDocuments({}),
+            Venue.countDocuments({ status: { $regex: /^active$/i } }),
+            Tournament.countDocuments({ status: { $in: ['Upcoming', 'Ongoing'] } }),
+            Venue.findOne({ status: { $regex: /^active$/i } }).sort({ rating: -1 }),
+            User.find({ user_profile: { $ne: null } }).sort({ createdAt: -1 }).limit(4).select('user_profile')
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                users: totalUsers,
+                venues: totalVenues,
+                tournaments: totalTournaments,
+                featuredVenue: topVenue,
+                recentAvatars: recentUsers.map(u => u.user_profile)
+            }
+        });
+    } catch (error) {
+        console.error('Platform Stats Error:', error);
+        res.status(500).json({ success: false, message: error.message, stack: error.stack });
+    }
 };
 
 module.exports = {
-    getDashboardMetrics
+    getDashboardMetrics,
+    getPlatformStats
 };

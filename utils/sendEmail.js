@@ -229,6 +229,36 @@ const sendBookingConfirmation = ({ email, name, venueName, date, timeSlot }) => 
     transporter.sendMail(mailOptions);
 };
 
+/**
+ * Send Inquiry Reply Email
+ */
+const sendInquiryReplyEmail = ({ email, name, subject, originalMessage, replyMessage }) => {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM || '"Arena Pro Support" <hbrajpura110@gmail.com>',
+        to: email,
+        subject: `Re: ${subject} - Arena Pro Support`,
+        html: `
+            <div style="font-family: 'Segoe UI', system-ui, sans-serif; max-width: 600px; margin: auto; background-color: #0f172a; border-radius: 24px; border: 1px solid #1e293b; color: #f8fafc; overflow: hidden;">
+                <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-bottom: 2px solid #3b82f6; padding: 40px 40px; text-align: center;">
+                    <h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #fff;">Response to Your Inquiry</h1>
+                </div>
+                <div style="padding: 40px;">
+                    <p style="font-size: 16px; color: #cbd5e1; margin-bottom: 25px;">Hello <strong>${name}</strong>,</p>
+                    <p style="font-size: 15px; color: #fff; line-height: 1.6; white-space: pre-wrap;">${replyMessage}</p>
+                    
+                    <div style="margin-top: 40px; background: #020617; border-radius: 12px; padding: 20px; border-left: 4px solid #475569;">
+                        <p style="margin: 0 0 10px; font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">Original Message</p>
+                        <p style="margin: 0; font-size: 13px; color: #94a3b8; font-style: italic;">"${originalMessage}"</p>
+                    </div>
+                    
+                    <p style="margin-top: 40px; font-size: 13px; color: #64748b; text-align: center;">Arena Pro Elite Support Team</p>
+                </div>
+            </div>
+        `
+    };
+    transporter.sendMail(mailOptions);
+};
+
 module.exports = {
     sendWelcomeEmail,
     sendBanEmail,
@@ -236,5 +266,6 @@ module.exports = {
     sendPartnerApprovalEmail,
     sendPartnerRejectionEmail,
     sendPasswordChangeAlert,
-    sendBookingConfirmation
+    sendBookingConfirmation,
+    sendInquiryReplyEmail
 };

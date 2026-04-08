@@ -68,7 +68,26 @@ const userSchema = new mongoose.Schema(
     websiteLink: {
       type: String,
       required: false,
-    }
+    },
+    // Gamification & Social
+    xp: { type: Number, default: 0 },
+    skillLevel: { 
+      type: String, 
+      enum: ['Rookie', 'Amateur', 'Semi-Pro', 'Pro', 'Elite', 'Legend'],
+      default: 'Rookie' 
+    },
+    stats: {
+      totalBookings: { type: Number, default: 0 },
+      discussionsCreated: { type: Number, default: 0 },
+      commentsPosted: { type: Number, default: 0 },
+      likesReceived: { type: Number, default: 0 }
+    },
+    badges: [{
+      name: String,
+      icon: String, // 'lucide-icon-name'
+      color: String,
+      unlockedAt: { type: Date, default: Date.now }
+    }],
   },
   {
     timestamps: true,

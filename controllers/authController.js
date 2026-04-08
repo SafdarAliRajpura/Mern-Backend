@@ -81,6 +81,10 @@ const registerUser = async (req, res) => {
                     mobileNumber: user.mobileNumber,
                     user_profile: user.user_profile,
                     role: user.role,
+                    xp: user.xp,
+                    skillLevel: user.skillLevel,
+                    stats: user.stats,
+                    badges: user.badges,
                     isOnboarded: user.isOnboarded,
                     token: generateToken(user._id),
                 }
@@ -128,6 +132,10 @@ const loginUser = async (req, res) => {
                     mobileNumber: user.mobileNumber,
                     user_profile: user.user_profile,
                     role: user.role,
+                    xp: user.xp,
+                    skillLevel: user.skillLevel,
+                    stats: user.stats,
+                    badges: user.badges,
                     isOnboarded: user.isOnboarded,
                     token: generateToken(user._id),
                 }
@@ -234,6 +242,10 @@ const updateProfile = async (req, res) => {
                 businessName: user.businessName,
                 websiteLink: user.websiteLink,
                 role: user.role,
+                xp: user.xp,
+                skillLevel: user.skillLevel,
+                stats: user.stats,
+                badges: user.badges,
                 isOnboarded: user.isOnboarded,
                 token: generateToken(user._id)
             }

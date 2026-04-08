@@ -1,5 +1,7 @@
 const Booking = require('../models/Booking');
 const { sendBookingConfirmation } = require('../utils/sendEmail');
+const { createNotification } = require('./notificationController');
+const { addXP } = require('./leaderboardController');
 
 // @route   POST /api/bookings
 // @desc    Create a new booking
@@ -45,6 +47,21 @@ exports.createBooking = async (req, res) => {
             }
         } catch (emailErr) {
             console.error('Email confirmation error:', emailErr);
+        }
+
+        // Trigger System Notification
+        if (req.user) {
+            await createNotification({
+                recipient: req.user.id,
+                type: 'BOOKING',
+                message: `Booking created for ${booking.turfName} on ${booking.date}`,
+                link: '/bookings'
+            });
+        }
+
+        // Reward for booking
+        if (req.user) {
+            await addXP(req.user.id, 50, 'totalBookings');
         }
 
         res.status(201).json({ success: true, data: booking });
@@ -118,6 +135,16 @@ exports.updateBookingStatus = async (req, res) => {
             { status, color }, 
             { new: true }
         );
+
+        // Notify user of status change
+        if (booking.userId) {
+            await createNotification({
+                recipient: booking.userId,
+                type: 'BOOKING',
+                message: `Your booking for ${booking.turfName} is now ${status}`,
+                link: '/bookings'
+            });
+        }
 
         res.status(200).json({ success: true, data: booking });
     } catch (error) {

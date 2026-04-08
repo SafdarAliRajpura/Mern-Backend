@@ -24,7 +24,10 @@ connectDB().then(() => {
   const reviewRoutes = require('./routes/reviewRoutes');
   const tournamentRoutes = require('./routes/tournamentRoutes');
   const analyticsRoutes = require('./routes/analyticsRoutes');
-
+const leaderboardRoutes = require('./routes/leaderboardRoutes');
+  const contactRoutes = require('./routes/contactRoutes');
+  const communityRoutes = require('./routes/communityRoutes');
+  const notificationRoutes = require('./routes/notificationRoutes');
 
   // Main route
   app.get('/', (req, res) => {
@@ -39,7 +42,10 @@ connectDB().then(() => {
   app.use('/api/reviews', reviewRoutes);
   app.use('/api/tournaments', tournamentRoutes);
   app.use('/api/analytics', analyticsRoutes);
-
+  app.use('/api/leaderboard', leaderboardRoutes);
+  app.use('/api/contacts', contactRoutes);
+  app.use('/api/community', communityRoutes);
+  app.use('/api/notifications', notificationRoutes);
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT,'0.0.0.0', () => console.log(`Server running on port ${PORT}`));
