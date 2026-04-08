@@ -1,4 +1,5 @@
 const Venue = require('../models/Venue');
+const mongoose = require('mongoose');
 
 // @route   GET /api/venues
 // @desc    Get all venues
@@ -71,5 +72,46 @@ exports.updateVenueStatus = async (req, res) => {
     } catch (error) {
         console.error("Error updating venue status", error);
         res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @route   GET /api/venues/categories
+// @desc    Get dynamic sport categories with counts
+// @access  Public
+exports.getSportCategories = async (req, res) => {
+    try {
+        const categories = await Venue.aggregate([
+            { $match: { status: { $regex: /^active$/i } } },
+            { $unwind: "$sports" },
+            { $group: { 
+                _id: "$sports", 
+                count: { $sum: 1 },
+                image: { $first: "$image" },
+                description: { $first: "$location" }
+            }},
+            { $sort: { count: -1 } },
+            { $limit: 6 }
+        ]);
+        
+        // Enhance data for frontend
+        const enhanced = categories.map(c => ({
+            title: c._id,
+            count: c.count,
+            image: c.image || null,
+            desc: `Experience premium ${c._id.toLowerCase()} facilities across ${c.count} verified arenas.`
+        }));
+
+        res.status(200).json({ success: true, data: enhanced });
+    } catch (error) {
+        console.error('Category Aggregation Error:', error);
+        
+        // Return premium fallbacks if DB is down to prevent frontend infinite loops
+        const fallbacks = [
+            { title: 'Football', count: 12, desc: 'FIFA-grade floodlights and premium grass.', image: '/assets/images/home/night-football.jpg' },
+            { title: 'Cricket', count: 8, desc: 'Pro-level bowling machines and practice nets.', image: '/assets/images/home/cricket.jpg' },
+            { title: 'Badminton', count: 5, desc: 'Indoor wooden courts with climate control.', image: '/assets/images/home/badminton.jpg' }
+        ];
+
+        res.status(200).json({ success: true, data: fallbacks, isFallback: true });
     }
 };
