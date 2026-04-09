@@ -49,3 +49,18 @@ exports.getReviewsByVenue = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+
+// @route   GET /api/reviews/highlights
+// @desc    Get top rated reviews across the platform
+exports.getEliteReviews = async (req, res) => {
+    try {
+        const reviews = await Review.find({ rating: { $gte: 4 } })
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .populate('venueId', 'name location image');
+        res.status(200).json({ success: true, data: reviews });
+    } catch (error) {
+        console.error("Get Elite Reviews Error:", error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
