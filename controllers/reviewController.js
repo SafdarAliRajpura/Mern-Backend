@@ -1,5 +1,6 @@
 const Review = require('../models/Review');
 const Venue = require('../models/Venue');
+const { addXP } = require('./leaderboardController');
 
 // @route   POST /api/reviews
 // @desc    Add a review to a venue
@@ -22,6 +23,11 @@ exports.addReview = async (req, res) => {
         const allReviews = await Review.find({ venueId });
         const avg = allReviews.reduce((acc, r) => acc + r.rating, 0) / allReviews.length;
         await Venue.findByIdAndUpdate(venueId, { rating: avg.toFixed(1) });
+
+        // Reward for adding a review
+        if (req.user) {
+            await addXP(req.user.id, 20);
+        }
 
         res.status(201).json({ success: true, data: review });
     } catch (error) {

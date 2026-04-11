@@ -142,9 +142,48 @@ const rejectPartner = async (req, res) => {
     }
 };
 
+// @desc    Add XP and potentially level up a user
+// @access  Internal Helper
+const addUserXP = async (userId, amount, eventType = '') => {
+    try {
+        const user = await User.findById(userId);
+        if (!user) return null;
+
+        user.xp = (user.xp || 0) + amount;
+
+        // Stat mapping based on event
+        if (eventType === 'booking') user.stats.totalBookings += 1;
+        if (eventType === 'post') user.stats.discussionsCreated += 1;
+        if (eventType === 'comment') user.stats.commentsPosted += 1;
+
+        // Level Logic
+        // 0 - 100: Rookie
+        // 101 - 500: Amateur
+        // 501 - 1500: Semi-Pro
+        // 1501 - 3000: Pro
+        // 3001 - 6000: Elite
+        // 6001+: Legend
+        const xp = user.xp;
+        let newLevel = 'Rookie';
+        if (xp > 6000) newLevel = 'Legend';
+        else if (xp > 3000) newLevel = 'Elite';
+        else if (xp > 1500) newLevel = 'Pro';
+        else if (xp > 500) newLevel = 'Semi-Pro';
+        else if (xp > 100) newLevel = 'Amateur';
+
+        user.skillLevel = newLevel;
+        await user.save();
+        return user;
+    } catch (error) {
+        console.error('Gamification Error:', error);
+        return null;
+    }
+};
+
 module.exports = {
   getUsers,
   toggleUserBan,
   approvePartner,
-  rejectPartner
+  rejectPartner,
+  addUserXP
 };

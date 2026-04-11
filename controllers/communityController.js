@@ -7,8 +7,8 @@ const { addXP } = require('./leaderboardController');
 exports.getDiscussions = async (req, res) => {
   try {
     const discussions = await Discussion.find()
-      .populate('author', 'name first_name last_name user_profile')
-      .populate('comments.user', 'name first_name last_name user_profile')
+      .populate('author', 'name first_name last_name user_profile primaryRole')
+      .populate('comments.user', 'name first_name last_name user_profile primaryRole')
       .sort({ createdAt: -1 });
     res.json(discussions);
   } catch (error) {
@@ -23,6 +23,9 @@ exports.createDiscussion = async (req, res) => {
 
     const newDiscussion = new Discussion({ author, title, content, category });
     await newDiscussion.save();
+
+    // Reward for creating a discussion
+    await addXP(author, 30, 'discussionsCreated');
 
     res.status(201).json(newDiscussion);
   } catch (error) {

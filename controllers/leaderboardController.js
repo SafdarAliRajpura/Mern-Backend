@@ -3,7 +3,7 @@ const User = require('../models/User');
 exports.getLeaderboard = async (req, res) => {
     try {
         const topUsers = await User.find({ role: 'user' })
-            .select('first_name last_name user_profile xp skillLevel badges stats')
+            .select('first_name last_name user_profile xp skillLevel primaryRole badges stats')
             .sort({ xp: -1 })
             .limit(10);
         
@@ -22,21 +22,31 @@ exports.addXP = async (userId, amount, statKey = null) => {
         const user = await User.findById(userId);
         if (!user) return;
 
-        user.xp += amount;
+        user.xp = (user.xp || 0) + amount;
         
+        // Dynamic Stat Increment
         if (statKey && user.stats.hasOwnProperty(statKey)) {
             user.stats[statKey] += 1;
         }
 
-        // Calculate Skill Level based on XP
-        if (user.xp > 5000) user.skillLevel = 'Legend';
-        else if (user.xp > 2500) user.skillLevel = 'Elite';
-        else if (user.xp > 1000) user.skillLevel = 'Pro';
-        else if (user.xp > 500) user.skillLevel = 'Semi-Pro';
-        else if (user.xp > 100) user.skillLevel = 'Amateur';
+        // Tier Thresholds
+        // Legend: 5001+
+        // Elite: 2501 - 5000
+        // Pro: 1001 - 2500
+        // Semi-Pro: 501 - 1000
+        // Amateur: 101 - 500
+        // Rookie: 0 - 100
+        const xp = user.xp;
+        let newLevel = 'Rookie';
+        if (xp > 5000) newLevel = 'Legend';
+        else if (xp > 2500) newLevel = 'Elite';
+        else if (xp > 1000) newLevel = 'Pro';
+        else if (xp > 500) newLevel = 'Semi-Pro';
+        else if (xp > 100) newLevel = 'Amateur';
 
+        user.skillLevel = newLevel;
         await user.save();
     } catch (err) {
-        console.error('XP Update Error:', err);
+        console.error('XP/Skill Error:', err);
     }
 };

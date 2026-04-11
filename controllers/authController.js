@@ -149,14 +149,34 @@ const loginUser = async (req, res) => {
     }
 };
 
-// @desc    Get current user profile
+// @desc    Get current user profile with dynamic rank
 // @route   GET /api/auth/me
 // @access  Private
 const getMe = async (req, res) => {
-    res.status(200).json({
-        success: true,
-        data: req.user
-    });
+    try {
+        // Calculate global rank based on XP (only comparing with other 'user' role members)
+        const rank = await User.countDocuments({ 
+            role: 'user', 
+            xp: { $gt: req.user.xp || 0 } 
+        }) + 1;
+
+        // Spread the user doc and append the calculated rank
+        const userData = {
+            ...req.user._doc,
+            rank
+        };
+
+        res.status(200).json({
+            success: true,
+            data: userData
+        });
+    } catch (error) {
+        console.error('GetMe Rank Calculation Error:', error);
+        res.status(200).json({
+            success: true,
+            data: req.user
+        });
+    }
 };
 
 // @desc    Onboard Partner (Update details and change state)
@@ -211,7 +231,11 @@ const onboardPartner = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
     try {
-        const { businessName, first_name, last_name, email, mobileNumber, websiteLink, user_profile } = req.body;
+        const { 
+            businessName, first_name, last_name, email, 
+            mobileNumber, websiteLink, user_profile,
+            bio, primaryRole, favoriteSports, socialLinks
+        } = req.body;
         
         const user = await User.findById(req.user.id);
         if (!user) {
@@ -226,6 +250,10 @@ const updateProfile = async (req, res) => {
         if (mobileNumber !== undefined) user.mobileNumber = mobileNumber;
         if (websiteLink !== undefined) user.websiteLink = websiteLink;
         if (user_profile !== undefined) user.user_profile = user_profile;
+        if (bio !== undefined) user.bio = bio;
+        if (primaryRole !== undefined) user.primaryRole = primaryRole;
+        if (favoriteSports !== undefined) user.favoriteSports = favoriteSports;
+        if (socialLinks !== undefined) user.socialLinks = socialLinks;
         
         await user.save();
         
@@ -244,6 +272,10 @@ const updateProfile = async (req, res) => {
                 role: user.role,
                 xp: user.xp,
                 skillLevel: user.skillLevel,
+                bio: user.bio,
+                primaryRole: user.primaryRole,
+                favoriteSports: user.favoriteSports,
+                socialLinks: user.socialLinks,
                 stats: user.stats,
                 badges: user.badges,
                 isOnboarded: user.isOnboarded,

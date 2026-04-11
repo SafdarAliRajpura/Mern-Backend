@@ -82,6 +82,13 @@ const userSchema = new mongoose.Schema(
       commentsPosted: { type: Number, default: 0 },
       likesReceived: { type: Number, default: 0 }
     },
+    socialLinks: {
+      instagram: String,
+      twitter: String
+    },
+    bio: { type: String, maxLength: 200 },
+    primaryRole: { type: String, default: 'Athlete' },
+    favoriteSports: [{ type: String }],
     badges: [{
       name: String,
       icon: String, // 'lucide-icon-name'

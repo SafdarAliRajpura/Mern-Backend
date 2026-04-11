@@ -2,18 +2,40 @@ const Venue = require('../models/Venue');
 const mongoose = require('mongoose');
 
 // @route   GET /api/venues
-// @desc    Get all venues
+// @desc    Get all venues with optional filters
 // @access  Public
 exports.getVenues = async (req, res) => {
     try {
         let query = {};
-        if (req.query.owner) {
-            query = { owner: req.query.owner };
+        const { owner, search, sport } = req.query;
+
+        // Base filter for active venues (for public discovery)
+        if (!owner) {
+            query.status = { $regex: /^active$/i };
+        } else {
+            query.owner = owner;
         }
-        const venues = await Venue.find(query).populate('owner');
+
+        // Search by name or location
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { location: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        // Filter by sport category
+        if (sport && sport !== 'All') {
+            query.sports = { $in: [new RegExp(`^${sport}$`, 'i')] };
+        }
+
+        const venues = await Venue.find(query)
+            .populate('owner', 'first_name last_name user_profile')
+            .sort({ rating: -1, createdAt: -1 });
+
         res.status(200).json({ success: true, count: venues.length, data: venues });
     } catch (error) {
-        console.error(error);
+        console.error('Get Venues Error:', error);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
