@@ -41,6 +41,7 @@ const sendWelcomeEmail = ({ email, name }) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) console.log('Error sending welcome email:', error);
+        else console.log('Welcome email sent:', info.response);
     });
 };
 
@@ -65,7 +66,10 @@ const sendBanEmail = ({ email, name }) => {
             </div>
         `
     };
-    transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log('Error sending ban email:', error);
+        else console.log('Ban email sent:', info.response);
+    });
 };
 
 /**
@@ -90,7 +94,10 @@ const sendUnbanEmail = ({ email, name }) => {
             </div>
         `
     };
-    transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log('Error sending unban email:', error);
+        else console.log('Unban email sent:', info.response);
+    });
 };
 
 /**
@@ -130,7 +137,10 @@ const sendPartnerApprovalEmail = ({ email, name, turfName, password }) => {
             </div>
         `
     };
-    transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log('Error sending partner approval email:', error);
+        else console.log('Partner approval email sent:', info.response);
+    });
 };
 
 /**
@@ -156,7 +166,10 @@ const sendPartnerRejectionEmail = ({ email, name, turfName }) => {
             </div>
         `
     };
-    transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log('Error sending partner rejection email:', error);
+        else console.log('Partner rejection email sent:', info.response);
+    });
 };
 
 /**
@@ -186,7 +199,10 @@ const sendPasswordChangeAlert = ({ email, name }) => {
             </div>
         `
     };
-    transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log('Error sending password change alert email:', error);
+        else console.log('Password change alert email sent:', info.response);
+    });
 };
 
 /**
@@ -226,7 +242,10 @@ const sendBookingConfirmation = ({ email, name, venueName, date, timeSlot }) => 
             </div>
         `
     };
-    transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log('Error sending booking confirmation email:', error);
+        else console.log('Booking confirmation email sent:', info.response);
+    });
 };
 
 /**
@@ -256,7 +275,10 @@ const sendInquiryReplyEmail = ({ email, name, subject, originalMessage, replyMes
             </div>
         `
     };
-    transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log('Error sending inquiry reply email:', error);
+        else console.log('Inquiry reply email sent:', info.response);
+    });
 };
 
 module.exports = {

@@ -22,7 +22,7 @@ exports.addReview = async (req, res) => {
         // Autoupdate Venue Average Rating
         const allReviews = await Review.find({ venueId });
         const avg = allReviews.reduce((acc, r) => acc + r.rating, 0) / allReviews.length;
-        await Venue.findByIdAndUpdate(venueId, { rating: avg.toFixed(1) });
+        await Venue.findByIdAndUpdate(venueId, { rating: avg.toFixed(1) }, { returnDocument: 'after' });
 
         // Reward for adding a review
         if (req.user) {

@@ -83,7 +83,7 @@ exports.updateVenueStatus = async (req, res) => {
         const venue = await Venue.findByIdAndUpdate(
             req.params.id,
             updateDoc,
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
 
         if (!venue) {

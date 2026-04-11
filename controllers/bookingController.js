@@ -133,7 +133,7 @@ exports.updateBookingStatus = async (req, res) => {
         const booking = await Booking.findByIdAndUpdate(
             req.params.id, 
             { status, color }, 
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         // Notify user of status change
