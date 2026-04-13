@@ -14,6 +14,7 @@ exports.addReview = async (req, res) => {
 
         const review = await Review.create({
             venueId,
+            userId: req.user ? req.user.id : null,
             user,
             rating,
             comment
@@ -63,7 +64,8 @@ exports.getEliteReviews = async (req, res) => {
         const reviews = await Review.find({ rating: { $gte: 4 } })
             .sort({ createdAt: -1 })
             .limit(10)
-            .populate('venueId', 'name location image');
+            .populate('venueId', 'name location image')
+            .populate('userId', 'user_profile first_name last_name');
         res.status(200).json({ success: true, data: reviews });
     } catch (error) {
         console.error("Get Elite Reviews Error:", error);
