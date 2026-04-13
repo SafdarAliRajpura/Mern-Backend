@@ -281,6 +281,77 @@ const sendInquiryReplyEmail = ({ email, name, subject, originalMessage, replyMes
     });
 };
 
+/**
+ * Send Booking Cancellation
+ */
+const sendBookingCancellation = ({ email, name, venueName, date, timeSlot }) => {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM || '"Arena Pro Operations" <hbrajpura110@gmail.com>',
+        to: email,
+        subject: 'URGENT: Session Status Modification 🏟️🚫',
+        html: `
+            <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 40px auto; background-color: #0c0e14; border-radius: 40px; overflow: hidden; border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: 0 40px 100px rgba(0,0,0,0.5);">
+                <!-- Animated-feel Header -->
+                <div style="background: linear-gradient(180deg, #7f1d1d 0%, #0c0e14 100%); padding: 80px 40px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div style="width: 80px; height: 80px; line-height: 80px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 24px; margin: 0 auto 30px; font-size: 32px;">
+                        🚫
+                    </div>
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -0.05em; color: #ffffff; text-transform: uppercase; font-style: italic;">Deployment <span style="color: #ef4444;">Voided</span></h1>
+                    <p style="margin: 10px 0 0; font-size: 11px; font-weight: 800; letter-spacing: 0.4em; color: rgba(239, 68, 68, 0.8); text-transform: uppercase;">Operational Update</p>
+                </div>
+
+                <div style="padding: 50px 50px 60px;">
+                    <p style="font-size: 16px; color: #a0aec0; line-height: 1.8; margin: 0 0 40px; text-align: center;">
+                        Hello <strong style="color: #ffffff;">${name}</strong>, please be advised that your upcoming session at <strong style="color: #ffffff;">${venueName}</strong> has been decommissioned by the venue partner.
+                    </p>
+                    
+                    <!-- Intelligence Card -->
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 35px; margin-bottom: 45px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <p style="margin: 0; font-size: 10px; font-weight: 800; color: #4a5568; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">Assigned Venue</p>
+                                    <p style="margin: 0; font-size: 15px; font-weight: 700; color: #ffffff;">${venueName}</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 25px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <p style="margin: 0; font-size: 10px; font-weight: 800; color: #4a5568; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">Scheduled Date</p>
+                                    <p style="margin: 0; font-size: 15px; font-weight: 700; color: #ffffff;">${date}</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding-top: 25px;">
+                                    <p style="margin: 0; font-size: 10px; font-weight: 800; color: #4a5568; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px;">Time Block</p>
+                                    <p style="margin: 0; font-size: 16px; font-weight: 900; color: #ef4444; font-style: italic;">${timeSlot}</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <p style="text-align: center; font-size: 13px; color: #4a5568; margin-bottom: 40px; line-height: 1.6;">
+                        This reservation has been successfully voided in our systems. Any transactional credits will be processed in accordance with the Arena Pro Service Agreement.
+                    </p>
+                    
+                    <a href="http://localhost:5173/venues" style="display: block; text-align: center; background: #ffffff; color: #000000; padding: 22px; border-radius: 18px; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px; transition: all 0.3s ease;">
+                        Re-deploy Session
+                    </a>
+                </div>
+
+                <div style="background-color: #000000; padding: 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.03);">
+                    <p style="margin: 0; font-size: 10px; color: #2d3748; letter-spacing: 0.3em; font-weight: 900; text-transform: uppercase;">
+                        Arena Pro Intelligence • Session Management
+                    </p>
+                </div>
+            </div>
+        `
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log('Error sending booking cancellation email:', error);
+        else console.log('Booking cancellation email sent:', info.response);
+    });
+};
+
 module.exports = {
     sendWelcomeEmail,
     sendBanEmail,
@@ -289,5 +360,7 @@ module.exports = {
     sendPartnerRejectionEmail,
     sendPasswordChangeAlert,
     sendBookingConfirmation,
+    sendBookingCancellation,
     sendInquiryReplyEmail
 };
+

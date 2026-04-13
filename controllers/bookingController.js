@@ -1,5 +1,5 @@
 const Booking = require('../models/Booking');
-const { sendBookingConfirmation } = require('../utils/sendEmail');
+const { sendBookingConfirmation, sendBookingCancellation } = require('../utils/sendEmail');
 const { createNotification } = require('./notificationController');
 const { addXP } = require('./leaderboardController');
 
@@ -134,12 +134,26 @@ exports.updateBookingStatus = async (req, res) => {
             req.params.id, 
             { status, color }, 
             { returnDocument: 'after' }
-        );
+        ).populate('userId', 'email first_name');
+
+        if (booking && status === 'Cancelled' && booking.userId?.email) {
+            try {
+                sendBookingCancellation({
+                    email: booking.userId.email,
+                    name: booking.userId.first_name || booking.user || 'Champion',
+                    venueName: booking.turfName,
+                    date: booking.date,
+                    timeSlot: booking.timeSlot
+                });
+            } catch (mailErr) {
+                console.error("Cancellation email failed:", mailErr);
+            }
+        }
 
         // Notify user of status change
         if (booking.userId) {
             await createNotification({
-                recipient: booking.userId,
+                recipient: booking.userId._id,
                 type: 'BOOKING',
                 message: `Your booking for ${booking.turfName} is now ${status}`,
                 link: '/bookings'

@@ -9,7 +9,13 @@ const bookingSchema = new mongoose.Schema({
     timeSlot: { type: String, required: true },
     price: { type: String, required: true },
     status: { type: String, default: 'Pending' },
-    color: { type: String, default: 'bg-yellow-500' }
+    color: { type: String, default: 'bg-yellow-500' },
+    
+    // Financial Ledger Fields
+    adminCommission: { type: Number, default: 0 },
+    partnerShare: { type: Number, default: 0 },
+    orderId: { type: String },
+    paymentId: { type: String }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Booking', bookingSchema);

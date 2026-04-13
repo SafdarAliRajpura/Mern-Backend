@@ -29,6 +29,7 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes');
   const communityRoutes = require('./routes/communityRoutes');
   const notificationRoutes = require('./routes/notificationRoutes');
   const searchRoutes = require('./routes/searchRoutes');
+  const paymentRoutes = require('./routes/paymentRoutes');
 
   // Main route
   app.get('/', (req, res) => {
@@ -48,6 +49,7 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes');
   app.use('/api/community', communityRoutes);
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/search', searchRoutes);
+  app.use('/api/payments', paymentRoutes);
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT,'0.0.0.0', () => console.log(`Server running on port ${PORT}`));

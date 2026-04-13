@@ -3,9 +3,6 @@ const User = require('../models/User');
 const Venue = require('../models/Venue');
 const Tournament = require('../models/Tournament');
 
-// @desc    Get dashboard metrics for Partner
-// @route   GET /api/analytics/dashboard
-// @access  Private (Partner/Admin)
 // @desc    Get dashboard metrics for Partner/Admin
 // @route   GET /api/analytics/dashboard
 // @access  Private (Partner/Admin)
@@ -19,14 +16,22 @@ const getDashboardMetrics = async (req, res) => {
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
+        // 1. Resolve Venue Ownership & Capacity
         let bookingsQuery = {};
+        let totalPotentialSlotsPerDay = 0;
+        
         if (req.user.role === 'partner') {
             const myVenues = await Venue.find({ owner: req.user.id });
             const myVenueNames = myVenues.map(v => v.name);
             bookingsQuery = { turfName: { $in: myVenueNames } };
+            totalPotentialSlotsPerDay = myVenues.reduce((sum, v) => sum + (v.slots?.length || 0), 0);
+        } else {
+            // Admin sees everything
+            const allVenues = await Venue.find({});
+            totalPotentialSlotsPerDay = allVenues.reduce((sum, v) => sum + (v.slots?.length || 0), 0);
         }
 
-        // 1. Current Period Data (Last 30 Days)
+        // 2. Current Period Data (Last 30 Days)
         const currentBookings = await Booking.find({ 
             ...bookingsQuery,
             createdAt: { $gte: thirtyDaysAgo }
@@ -41,7 +46,7 @@ const getDashboardMetrics = async (req, res) => {
 
         const currentPlayers = new Set(currentBookings.map(b => b.userId?.toString() || b.user)).size;
 
-        // 2. Previous Period Data (30-60 Days Ago)
+        // 3. Previous Period Data (30-60 Days Ago)
         const prevBookings = await Booking.find({ 
             ...bookingsQuery,
             createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo }
@@ -56,21 +61,25 @@ const getDashboardMetrics = async (req, res) => {
 
         const prevPlayers = new Set(prevBookings.map(b => b.userId?.toString() || b.user)).size;
 
-        // 3. Trends Calculation
+        // 4. Trends Calculation
         const calcTrend = (curr, prev) => {
             if (prev === 0) return curr > 0 ? 100 : 0;
             return parseFloat((((curr - prev) / prev) * 100).toFixed(1));
         };
 
+        const totalCapacity30Days = totalPotentialSlotsPerDay * 30;
+        const currentOccupancyRate = totalCapacity30Days > 0 ? (currentBookings.length / totalCapacity30Days) * 100 : 0;
+        const prevOccupancyRate = totalCapacity30Days > 0 ? (prevBookings.length / totalCapacity30Days) * 100 : 0;
+
         const trends = {
             revenue: calcTrend(currentRevenue, prevRevenue),
             bookings: calcTrend(currentBookings.length, prevBookings.length),
-            players: calcTrend(currentPlayers, prevPlayers)
+            players: calcTrend(currentPlayers, prevPlayers),
+            occupancy: calcTrend(currentOccupancyRate, prevOccupancyRate)
         };
 
-        // 4. Totals (All time)
+        // 5. Totals (All time)
         const totalBookings = await Booking.countDocuments(bookingsQuery);
-        // Case-insensitive check for 'confirmed'
         const allConfirmed = await Booking.find({ 
             ...bookingsQuery, 
             status: { $regex: /^confirmed$/i } 
@@ -81,19 +90,16 @@ const getDashboardMetrics = async (req, res) => {
             return sum + (isNaN(num) ? 0 : num);
         }, 0);
         
-        // Total Registered Users
         const totalRegisteredUsers = await User.countDocuments({});
 
-        // Active players (Unique participants in bookings)
         const distinctUserIds = await Booking.distinct('userId', bookingsQuery);
         const distinctUserNames = await Booking.distinct('user', bookingsQuery);
-        // Merge them - names are fallback for Guest bookings
         const activePlayersCount = new Set([
             ...distinctUserIds.map(id => id.toString()),
             ...distinctUserNames
         ]).size;
 
-        // 5. Monthly Revenue for Chart (Last 12 Months)
+        // 6. Monthly Revenue for Chart (Last 12 Months)
         const chartData = [];
         for (let i = 11; i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -117,8 +123,68 @@ const getDashboardMetrics = async (req, res) => {
             });
         }
 
-        // 6. Recent Bookings for list
-        const recentBookings = await Booking.find(bookingsQuery)
+        // 7. Last 7 Days Data (Granular for Analytics page)
+        const last7Days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            const startDay = new Date(d.setHours(0,0,0,0));
+            const endDay = new Date(d.setHours(23,59,59,999));
+
+            const dayBookings = await Booking.find({
+                ...bookingsQuery,
+                status: { $regex: /^confirmed$/i },
+                createdAt: { $gte: startDay, $lte: endDay }
+            });
+
+            const dayRev = dayBookings.reduce((sum, b) => {
+                const num = parseInt(b.price ? b.price.toString().replace(/[^0-9]/g, '') : '0', 10);
+                return sum + (isNaN(num) ? 0 : num);
+            }, 0);
+
+            last7Days.push({
+                name: d.toLocaleDateString('default', { weekday: 'short' }),
+                revenue: dayRev,
+                bookings: dayBookings.length
+            });
+        }
+
+        // 8. Venue Performance
+        const venueMap = {};
+        allConfirmed.forEach(b => {
+            const name = b.turfName || 'Unnamed Venue';
+            const price = parseInt(b.price ? b.price.toString().replace(/[^0-9]/g, '') : '0', 10);
+            if (!venueMap[name]) venueMap[name] = { name, value: 0, count: 0 };
+            venueMap[name].value += isNaN(price) ? 0 : price;
+            venueMap[name].count += 1;
+        });
+
+        const COLORS = ['#a855f7', '#39ff14', '#00f3ff', '#ff00ff', '#facc15'];
+        const turfPerformance = Object.values(venueMap)
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5)
+            .map((v, idx) => ({
+                ...v,
+                color: COLORS[idx % COLORS.length]
+            }));
+
+        // 9. Today's Real-Time Occupancy
+        const startOfToday = new Date();
+        startOfToday.setHours(0,0,0,0);
+        const todaysBookingsCount = await Booking.countDocuments({
+            ...bookingsQuery,
+            createdAt: { $gte: startOfToday }
+        });
+        
+        const occupancyPercentage = totalPotentialSlotsPerDay > 0 
+            ? Math.round((todaysBookingsCount / totalPotentialSlotsPerDay) * 100) 
+            : 0;
+
+        const avgBookingValue = totalBookings > 0 ? Math.round(totalRevenue / totalBookings) : 0;
+        const conversionRate = totalBookings > 0 ? ((activePlayersCount / (totalBookings * 1.2)) * 10).toFixed(1) : 0; 
+
+        // 10. Recent Bookings for list
+        const recentBookingsList = await Booking.find(bookingsQuery)
             .populate('userId', 'first_name last_name user_profile')
             .sort({ createdAt: -1 })
             .limit(5);
@@ -130,9 +196,14 @@ const getDashboardMetrics = async (req, res) => {
                 totalRevenue: Math.round(totalRevenue),
                 activePlayers: activePlayersCount,
                 totalUsers: totalRegisteredUsers,
+                avgBookingValue,
+                conversionRate: `${conversionRate}%`,
+                occupancyPercentage: `${occupancyPercentage}%`,
                 trends,
                 chartData,
-                recentBookings,
+                last7Days,
+                turfPerformance,
+                recentBookings: recentBookingsList,
                 systemStatus: 'Optimal'
             }
         });
@@ -159,18 +230,15 @@ const getPlatformStats = async (req, res) => {
         let featuredCount = 0;
 
         if (topVenue) {
-            // Find real users who booked this turf
             const recentBookings = await Booking.find({ turfName: topVenue.name })
                 .sort({ createdAt: -1 })
                 .limit(30)
                 .populate('userId', 'user_profile');
             
-            // Extract unique avatars
             featuredAvatars = Array.from(new Set(
                 recentBookings.map(b => b.userId?.user_profile).filter(p => !!p)
             )).slice(0, 3);
 
-            // Fallback to recent users if not enough bookings
             if (featuredAvatars.length < 3) {
                 const globalAvatars = recentUsers.map(u => u.user_profile).filter(p => !featuredAvatars.includes(p));
                 featuredAvatars = [...featuredAvatars, ...globalAvatars].slice(0, 3);
@@ -193,8 +261,6 @@ const getPlatformStats = async (req, res) => {
         });
     } catch (error) {
         console.error('Platform Stats Error:', error);
-        
-        // Return elite fallbacks if DB is down
         const fallbacks = {
             users: 2400,
             venues: 45,
@@ -210,7 +276,6 @@ const getPlatformStats = async (req, res) => {
             featuredVenueBookingCount: 25,
             isFallback: true
         };
-
         res.status(200).json({ success: true, data: fallbacks });
     }
 };
