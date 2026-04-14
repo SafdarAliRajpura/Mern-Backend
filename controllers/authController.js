@@ -2,6 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendWelcomeEmail, sendPasswordChangeAlert } = require('../utils/sendEmail');
+const { notifyAdmins } = require('./notificationController');
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -67,6 +68,20 @@ const registerUser = async (req, res) => {
                 sendWelcomeEmail({
                     email: user.email,
                     name: user.first_name || 'Champion'
+                });
+
+                // Notify Admins about new Player
+                notifyAdmins({
+                    type: 'SYSTEM',
+                    message: `New Athlete Joined: ${user.first_name} ${user.last_name} (${user.email})`,
+                    link: '/admin/users'
+                });
+            } else if (user.role === 'partner') {
+                // Notify Admins about new Partner Registration
+                notifyAdmins({
+                    type: 'SYSTEM',
+                    message: `New Partner Application: ${user.first_name} ${user.last_name} is awaiting review.`,
+                    link: '/admin/partners'
                 });
             }
 
@@ -208,6 +223,13 @@ const onboardPartner = async (req, res) => {
         user.isOnboarded = true;
         
         await user.save();
+        
+        // Notify Admins about partner activation
+        notifyAdmins({
+            type: 'SYSTEM',
+            message: `Brand Activated: ${user.businessName} has completed onboarding protocols.`,
+            link: '/admin/partners'
+        });
         
         res.status(200).json({
             success: true,

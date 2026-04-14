@@ -15,7 +15,9 @@ const bookingSchema = new mongoose.Schema({
     adminCommission: { type: Number, default: 0 },
     partnerShare: { type: Number, default: 0 },
     orderId: { type: String },
-    paymentId: { type: String }
+    paymentId: { type: String },
+    isCheckedIn: { type: Boolean, default: false },
+    checkInTime: { type: Date }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Booking', bookingSchema);

@@ -1,4 +1,5 @@
 const Tournament = require('../models/Tournament');
+const { notifyAdmins } = require('./notificationController');
 
 // @route   GET /api/tournaments
 // @desc    Get all tournaments
@@ -42,6 +43,14 @@ exports.createTournament = async (req, res) => {
         // Link to the authenticated user
         req.body.owner = req.user.id;
         const tournament = await Tournament.create(req.body);
+
+        // Notify Admins about new Tournament
+        notifyAdmins({
+            type: 'TOURNAMENT',
+            message: `New Tournament Hosted: ${tournament.name} at ${tournament.location}`,
+            link: '/admin/tournaments'
+        });
+
         res.status(201).json({ success: true, data: tournament });
     } catch (error) {
         console.error("Create Tournament Error:", error);

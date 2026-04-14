@@ -1,6 +1,8 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const Booking = require('../models/Booking');
+const Venue = require('../models/Venue');
+const { createNotification } = require('./notificationController');
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -79,11 +81,38 @@ exports.verifyPayment = async (req, res) => {
 
         if (isAuthentic) {
             // Update booking status to Confirmed
-            await Booking.findByIdAndUpdate(bookingId, {
+            const booking = await Booking.findByIdAndUpdate(bookingId, {
                 status: 'Confirmed',
                 paymentId: razorpay_payment_id,
                 color: 'bg-emerald-500'
-            });
+            }, { new: true });
+
+            // Trigger Real-time System Notifications
+            if (booking) {
+                // 1. Notify the Athlete
+                await createNotification({
+                    recipient: booking.userId,
+                    type: 'BOOKING',
+                    message: `Payment Verified! Your slot at ${booking.turfName} is confirmed. View your credentials in 'My Bookings'.`,
+                    link: '/bookings'
+                });
+
+                // 2. Notify the Venue Partner
+                try {
+                    const venue = await Venue.findOne({ name: booking.turfName });
+                    if (venue && venue.owner) {
+                        await createNotification({
+                            recipient: venue.owner,
+                            sender: booking.userId,
+                            type: 'BOOKING',
+                            message: `Payment Received: ${booking.user} confirmed a slot at ${venue.name}. Check your ledger.`,
+                            link: '/partner/bookings'
+                        });
+                    }
+                } catch (pNotifErr) {
+                    console.error('Partner Notification Failure in Payment Sync:', pNotifErr);
+                }
+            }
 
             res.status(200).json({
                 success: true,

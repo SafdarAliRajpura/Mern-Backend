@@ -1,4 +1,5 @@
 const Notification = require('../models/Notification');
+const User = require('../models/User');
 
 exports.getNotifications = async (req, res) => {
   try {
@@ -40,5 +41,19 @@ exports.createNotification = async (data) => {
         return notification;
     } catch (e) {
         console.error('Notification Creation Error:', e);
+    }
+};
+
+// Global broadcast to all Super Admins
+exports.notifyAdmins = async (data) => {
+    try {
+        const admins = await User.find({ role: 'admin' });
+        const notifications = admins.map(admin => ({
+            ...data,
+            recipient: admin._id
+        }));
+        await Notification.insertMany(notifications);
+    } catch (e) {
+        console.error('Admin Notification Broadcast Failure:', e);
     }
 };

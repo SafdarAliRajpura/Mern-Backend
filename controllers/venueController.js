@@ -1,5 +1,6 @@
 const Venue = require('../models/Venue');
 const mongoose = require('mongoose');
+const { notifyAdmins } = require('./notificationController');
 
 // @route   GET /api/venues
 // @desc    Get all venues with optional filters
@@ -63,6 +64,14 @@ exports.createVenue = async (req, res) => {
     try {
         req.body.owner = req.user.id;
         const venue = await Venue.create(req.body);
+
+        // Notify Admins about new Venue
+        notifyAdmins({
+            type: 'SYSTEM',
+            message: `New Arena Registered: ${venue.name} in ${venue.location}`,
+            link: '/admin/venues'
+        });
+
         res.status(201).json({ success: true, data: venue });
     } catch (error) {
         console.error(error);
