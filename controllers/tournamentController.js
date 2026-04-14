@@ -1,5 +1,60 @@
 const Tournament = require('../models/Tournament');
-const { notifyAdmins } = require('./notificationController');
+const TournamentRegistration = require('../models/TournamentRegistration');
+const { notifyAdmins, createNotification } = require('./notificationController');
+
+// ... (existing analytics/crud methods)
+
+// @route   POST /api/tournaments/:id/register
+// @desc    Register a team for a tournament
+// @access  Private (Athlete)
+exports.registerTournament = async (req, res) => {
+    try {
+        const tournament = await Tournament.findById(req.params.id);
+        if (!tournament) {
+            return res.status(404).json({ success: false, message: 'Tournament not found' });
+        }
+
+        // Check for duplicate registration by same user/email
+        const existing = await TournamentRegistration.findOne({ 
+            tournamentId: req.params.id, 
+            $or: [{ userId: req.user.id }, { email: req.body.email }] 
+        });
+
+        if (existing) {
+            return res.status(400).json({ success: false, message: 'You have already registered a team for this event.' });
+        }
+
+        const registration = await TournamentRegistration.create({
+            ...req.body,
+            tournamentId: req.params.id,
+            userId: req.user.id
+        });
+
+        // 1. Notify the Athlete
+        await createNotification({
+            recipient: req.user.id,
+            type: 'TOURNAMENT',
+            message: `Squad Registered: ${registration.teamName} is confirmed for ${tournament.name}!`,
+            link: '/tournaments'
+        });
+
+        // 2. Notify the Tournament Partner (Host)
+        if (tournament.owner) {
+            await createNotification({
+                recipient: tournament.owner,
+                sender: req.user.id,
+                type: 'TOURNAMENT',
+                message: `New Competitor: ${registration.teamName} (Capt. ${registration.captainName}) joined ${tournament.name}.`,
+                link: '/partner/tournaments'
+            });
+        }
+
+        res.status(201).json({ success: true, data: registration });
+    } catch (error) {
+        console.error("Tournament Registration Error:", error);
+        res.status(500).json({ success: false, message: 'Failed to process tournament enrollment.' });
+    }
+};
 
 // @route   GET /api/tournaments
 // @desc    Get all tournaments

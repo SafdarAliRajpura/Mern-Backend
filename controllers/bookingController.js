@@ -233,6 +233,11 @@ exports.verifyCheckIn = async (req, res) => {
         booking.status = 'Completed'; // Auto-complete on check-in
         await booking.save();
 
+        // Reward for Attendance
+        if (booking.userId) {
+            await addXP(booking.userId._id, 25, 'totalBookings'); // Reward for actually showing up
+        }
+
         // Notify user of successful entry
         if (booking.userId) {
             await createNotification({

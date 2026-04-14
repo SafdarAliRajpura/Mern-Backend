@@ -21,6 +21,24 @@ exports.createOrder = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Amount is required' });
         }
 
+        // --- Tactical Concurrency Guard ---
+        // Verify slot availability before initiating financial flow
+        const { turfName, date, timeSlot } = bookingData;
+        const conflict = await Booking.findOne({
+            turfName,
+            date,
+            timeSlot,
+            status: { $in: ['Confirmed', 'Pending'] }
+        });
+
+        if (conflict) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Tactical Conflict! This slot was secured by another athlete while you were processing. Please choose another time.` 
+            });
+        }
+        // ----------------------------------
+
         // Razorpay expects amount in paise (multiply by 100)
         const options = {
             amount: Math.round(amount * 100),

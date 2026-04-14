@@ -38,7 +38,7 @@ const getDashboardMetrics = async (req, res) => {
         });
 
         const currentRevenue = currentBookings
-            .filter(b => b.status === 'Confirmed')
+            .filter(b => ['Confirmed', 'Completed'].includes(b.status))
             .reduce((sum, b) => {
                 const num = parseInt(b.price ? b.price.toString().replace(/[^0-9]/g, '') : '0', 10);
                 return sum + (isNaN(num) ? 0 : num);
@@ -53,7 +53,7 @@ const getDashboardMetrics = async (req, res) => {
         });
 
         const prevRevenue = prevBookings
-            .filter(b => b.status === 'Confirmed')
+            .filter(b => ['Confirmed', 'Completed'].includes(b.status))
             .reduce((sum, b) => {
                 const num = parseInt(b.price ? b.price.toString().replace(/[^0-9]/g, '') : '0', 10);
                 return sum + (isNaN(num) ? 0 : num);
@@ -82,7 +82,7 @@ const getDashboardMetrics = async (req, res) => {
         const totalBookings = await Booking.countDocuments(bookingsQuery);
         const allConfirmed = await Booking.find({ 
             ...bookingsQuery, 
-            status: { $regex: /^confirmed$/i } 
+            status: { $in: ['Confirmed', 'Completed'] } 
         });
         
         const totalRevenue = allConfirmed.reduce((sum, b) => {
@@ -108,7 +108,7 @@ const getDashboardMetrics = async (req, res) => {
 
             const monthBookings = await Booking.find({
                 ...bookingsQuery,
-                status: { $regex: /^confirmed$/i },
+                status: { $in: ['Confirmed', 'Completed'] },
                 createdAt: { $gte: start, $lte: end }
             });
 
@@ -133,7 +133,7 @@ const getDashboardMetrics = async (req, res) => {
 
             const dayBookings = await Booking.find({
                 ...bookingsQuery,
-                status: { $regex: /^confirmed$/i },
+                status: { $in: ['Confirmed', 'Completed'] },
                 createdAt: { $gte: startDay, $lte: endDay }
             });
 
