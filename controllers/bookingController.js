@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const { sendBookingConfirmation, sendBookingCancellation } = require('../utils/sendEmail');
 const { createNotification } = require('./notificationController');
@@ -190,6 +191,14 @@ exports.updateBookingStatus = async (req, res) => {
 // @access  Partner/Admin
 exports.verifyCheckIn = async (req, res) => {
     try {
+        // Validation: Ensure the ID is a valid MongoDB 24-char hex string
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid Matrix Format. The Ticket ID must be exactly 24 characters.' 
+            });
+        }
+
         const booking = await Booking.findById(req.params.id).populate('userId', 'first_name last_name');
         
         if (!booking) {
