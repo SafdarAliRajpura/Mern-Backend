@@ -3,6 +3,7 @@ const router = express.Router();
 const { 
     getTournaments, 
     getTournamentById, 
+    getMyTournaments,
     createTournament, 
     updateTournament, 
     deleteTournament,
@@ -13,6 +14,7 @@ const {
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.get('/', getTournaments);
+router.get('/my-tournaments', protect, authorize('partner', 'admin'), getMyTournaments);
 router.get('/:id', getTournamentById);
 
 // Public/Athlete registration

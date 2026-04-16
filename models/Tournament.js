@@ -12,6 +12,7 @@ const tournamentSchema = new mongoose.Schema({
     totalSlots: { type: Number, required: true },
     minPlayers: { type: Number, default: 5 },
     maxPlayers: { type: Number, default: 11 },
+    teamSize: { type: Number, default: 5 },
     registeredTeams: { type: Number, default: 0 },
     image: { type: String },
     status: { type: String, enum: ['Upcoming', 'Ongoing', 'Completed'], default: 'Upcoming' },

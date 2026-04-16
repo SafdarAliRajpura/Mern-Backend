@@ -91,6 +91,20 @@ exports.getTournaments = async (req, res) => {
     }
 };
 
+// @route   GET /api/tournaments/my-tournaments
+// @desc    Get all tournaments owned by the current partner
+// @access  Private (Partner/Admin)
+exports.getMyTournaments = async (req, res) => {
+    try {
+        const query = (req.user && req.user.role === 'admin') ? {} : { owner: req.user.id };
+        const tournaments = await Tournament.find(query).sort({ createdAt: -1 });
+        res.status(200).json({ success: true, count: tournaments.length, data: tournaments });
+    } catch (error) {
+        console.error("Fetch My Tournaments Error:", error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 // @route   GET /api/tournaments/:id
 // @desc    Get single tournament
 // @access  Public

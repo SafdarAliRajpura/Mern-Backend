@@ -33,6 +33,15 @@ exports.markAllAsRead = async (req, res) => {
   }
 };
 
+exports.deleteAllNotifications = async (req, res) => {
+  try {
+    await Notification.deleteMany({ recipient: req.user.id });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to clear notifications' });
+  }
+};
+
 // Helper function to create notification (not an exported route)
 exports.createNotification = async (data) => {
     try {

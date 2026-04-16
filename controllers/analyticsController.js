@@ -180,8 +180,25 @@ const getDashboardMetrics = async (req, res) => {
             ? Math.round((todaysBookingsCount / totalPotentialSlotsPerDay) * 100) 
             : 0;
 
+        // 9. Advanced Player Intelligence (Bookings + Tournaments)
+        const TournamentRegistration = require('../models/TournamentRegistration');
+        const myTournaments = await Tournament.find({ owner: req.user.id });
+        const tournamentIds = myTournaments.map(t => t._id);
+        
+        const tournamentRegs = await TournamentRegistration.find({ tournamentId: { $in: tournamentIds } });
+        
+        const tournamentPlayerIds = tournamentRegs.map(reg => reg.userId.toString());
+        const tournamentPlayerNames = tournamentRegs.flatMap(reg => reg.players || []);
+        
+        const finalActivePlayersCount = new Set([
+            ...distinctUserIds.map(id => id.toString()),
+            ...distinctUserNames,
+            ...tournamentPlayerIds,
+            ...tournamentPlayerNames
+        ]).size;
+
         const avgBookingValue = totalBookings > 0 ? Math.round(totalRevenue / totalBookings) : 0;
-        const conversionRate = totalBookings > 0 ? ((activePlayersCount / (totalBookings * 1.2)) * 10).toFixed(1) : 0; 
+        const conversionRate = totalBookings > 0 ? ((finalActivePlayersCount / (totalBookings * 1.5)) * 10).toFixed(1) : 0; 
 
         // 10. Recent Bookings for list
         const recentBookingsList = await Booking.find(bookingsQuery)
@@ -194,11 +211,11 @@ const getDashboardMetrics = async (req, res) => {
             data: {
                 totalBookings,
                 totalRevenue: Math.round(totalRevenue),
-                activePlayers: activePlayersCount,
+                activePlayers: finalActivePlayersCount,
                 totalUsers: totalRegisteredUsers,
                 avgBookingValue,
                 conversionRate: `${conversionRate}%`,
-                occupancyPercentage: `${occupancyPercentage}%`,
+                occupancyPercentage: `${Math.round(currentOccupancyRate)}%`,
                 trends,
                 chartData,
                 last7Days,
