@@ -1,6 +1,7 @@
 const Tournament = require('../models/Tournament');
 const TournamentRegistration = require('../models/TournamentRegistration');
 const { notifyAdmins, createNotification } = require('./notificationController');
+const { sendTournamentRegistrationEmail } = require('../utils/sendEmail');
 
 // ... (existing analytics/crud methods)
 
@@ -30,6 +31,11 @@ exports.registerTournament = async (req, res) => {
             userId: req.user.id
         });
 
+        // Increment registered teams count using atomic $inc for maximum reliability
+        await Tournament.findByIdAndUpdate(req.params.id, { 
+            $inc: { registeredTeams: 1 } 
+        });
+
         // 1. Notify the Athlete
         await createNotification({
             recipient: req.user.id,
@@ -48,6 +54,17 @@ exports.registerTournament = async (req, res) => {
                 link: '/partner/tournaments'
             });
         }
+
+        // 3. Send Email Confirmation to Athlete
+        sendTournamentRegistrationEmail({
+            email: req.user.email,
+            name: `${req.user.first_name} ${req.user.last_name}`,
+            tournamentName: tournament.name,
+            teamName: req.body.teamName,
+            entryFee: tournament.entryFee,
+            date: tournament.date,
+            players: req.body.players
+        });
 
         res.status(201).json({ success: true, data: registration });
     } catch (error) {
@@ -145,5 +162,31 @@ exports.deleteTournament = async (req, res) => {
     } catch (error) {
         console.error("Delete Tournament Error:", error);
         res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @route   GET /api/tournaments/:id/registrations
+// @desc    Get all registrations for a tournament
+// @access  Private (Partner/Admin)
+exports.getTournamentRegistrations = async (req, res) => {
+    try {
+        const tournament = await Tournament.findById(req.params.id);
+        if (!tournament) {
+            return res.status(404).json({ success: false, message: 'Tournament not found' });
+        }
+
+        // Only owner or admin can see registrations
+        if (tournament.owner.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Unauthorized intelligence access.' });
+        }
+
+        const registrations = await TournamentRegistration.find({ tournamentId: req.params.id })
+            .populate('userId', 'first_name last_name email')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({ success: true, count: registrations.length, data: registrations });
+    } catch (error) {
+        console.error("Fetch Tournament Registrations Error:", error);
+        res.status(500).json({ success: false, message: 'Failed to retrieve roster data.' });
     }
 };

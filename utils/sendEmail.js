@@ -352,6 +352,69 @@ const sendBookingCancellation = ({ email, name, venueName, date, timeSlot }) => 
     });
 };
 
+/**
+ * Send Tournament Registration Confirmation
+ */
+const sendTournamentRegistrationEmail = ({ email, name, tournamentName, teamName, entryFee, date, players }) => {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM || '"Arena Pro Championships" <hbrajpura110@gmail.com>',
+        to: email,
+        subject: `Locked & Loaded: ${teamName} is for ${tournamentName}! 🏆`,
+        html: `
+            <div style="font-family: 'Inter', system-ui, sans-serif; max-width: 600px; margin: auto; background-color: #020617; border-radius: 32px; overflow: hidden; border: 1px solid #facc15; color: #f8fafc;">
+                <div style="background: linear-gradient(135deg, #713f12 0%, #a16207 100%); padding: 70px 40px; text-align: center;">
+                    <div style="display: inline-block; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 20px; margin-bottom: 20px;">
+                        <span style="font-size: 40px;">🏆</span>
+                    </div>
+                    <h1 style="margin: 0; font-size: 34px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; font-style: italic; color: #facc15;">Challenge Accepted.</h1>
+                    <p style="margin: 5px 0 0; font-size: 14px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 3px;">${tournamentName}</p>
+                </div>
+                
+                <div style="padding: 50px 40px;">
+                    <p style="font-size: 16px; margin-bottom: 30px; color: #94a3b8; text-align: center;">
+                        Athlete <strong style="color: #fff;">${name}</strong>, your deployment is authorized. 
+                        The <strong style="color: #facc15;">${teamName}</strong> is officially entered into the arena.
+                    </p>
+                    
+                    <div style="background: #0f172a; border-radius: 24px; padding: 30px; border: 1px solid #1e293b; margin-bottom: 40px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr style="border-bottom: 1px solid #1e293b;">
+                                <td style="padding: 15px 0; color: #64748b; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">Engagement Date</td>
+                                <td style="padding: 15px 0; text-align: right; color: #fff; font-weight: 700;">${date}</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #1e293b;">
+                                <td style="padding: 15px 0; color: #64748b; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">Entry Fee Paid</td>
+                                <td style="padding: 15px 0; text-align: right; color: #facc15; font-weight: 900;">₹${entryFee}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 15px 0; color: #64748b; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">Status</td>
+                                <td style="padding: 15px 0; text-align: right; color: #10b981; font-weight: 900; text-transform: uppercase;">Confirmed</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <h4 style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 3px; margin: 0 0 15px; text-align: center;">Confirmed Roster</h4>
+                    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 40px;">
+                        ${players.map(p => `
+                            <span style="padding: 6px 12px; background: #1e293b; border-radius: 8px; color: #cbd5e1; font-size: 11px; font-weight: 700; border: 1px solid #334155; margin: 4px;">${p}</span>
+                        `).join('')}
+                    </div>
+
+                    <a href="http://localhost:5173/profile" style="display: block; text-align: center; background-color: #facc15; color: #000; padding: 22px; border-radius: 16px; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; font-size: 13px; box-shadow: 0 10px 40px rgba(250, 204, 21, 0.15);">View Your Match Center</a>
+                </div>
+
+                <div style="background-color: #000; padding: 35px; text-align: center; border-top: 1px solid #1e293b;">
+                    <p style="margin: 0; font-size: 10px; color: #475569; letter-spacing: 2px; font-weight: 800; text-transform: uppercase;">ARENA PRO CHAMPIONSHIPS • PLAY FOR GLORY</p>
+                </div>
+            </div>
+        `
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log('Error sending tournament registration email:', error);
+        else console.log('Tournament registration email sent:', info.response);
+    });
+};
+
 module.exports = {
     sendWelcomeEmail,
     sendBanEmail,
@@ -361,6 +424,7 @@ module.exports = {
     sendPasswordChangeAlert,
     sendBookingConfirmation,
     sendBookingCancellation,
+    sendTournamentRegistrationEmail,
     sendInquiryReplyEmail
 };
 

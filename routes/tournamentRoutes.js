@@ -6,7 +6,8 @@ const {
     createTournament, 
     updateTournament, 
     deleteTournament,
-    registerTournament
+    registerTournament,
+    getTournamentRegistrations
 } = require('../controllers/tournamentController');
 
 const { protect, authorize } = require('../middleware/authMiddleware');
@@ -16,6 +17,9 @@ router.get('/:id', getTournamentById);
 
 // Public/Athlete registration
 router.post('/:id/register', protect, registerTournament);
+
+// Protected routes for partners and admin
+router.get('/:id/registrations', protect, authorize('partner', 'admin'), getTournamentRegistrations);
 
 // Protected routes for partners and admin
 router.post('/', protect, authorize('partner', 'admin'), createTournament);
