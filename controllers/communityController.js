@@ -2,6 +2,8 @@ const Discussion = require('../models/Discussion');
 const CommunityEvent = require('../models/CommunityEvent');
 const { createNotification } = require('./notificationController');
 const { addXP } = require('./leaderboardController');
+const { sendEventJoinNotification } = require('../utils/sendEmail');
+const User = require('../models/User');
 
 // Discussions
 exports.getDiscussions = async (req, res) => {
@@ -146,6 +148,22 @@ exports.toggleJoinEvent = async (req, res) => {
                 return res.status(400).json({ error: 'Event is full' });
             }
             event.attendees.push(userId); // Join
+
+            // Send Email Notification to Organizer
+            try {
+                const organizer = await User.findById(event.organizer);
+                const joiner = await User.findById(userId);
+                if (organizer && joiner) {
+                    sendEventJoinNotification({
+                        organizerEmail: organizer.email,
+                        organizerName: organizer.first_name || organizer.name,
+                        eventTitle: event.title,
+                        joinerName: `${joiner.first_name} ${joiner.last_name || ''}`
+                    });
+                }
+            } catch (mailErr) {
+                console.error("Failed to sync event email notification:", mailErr);
+            }
         } else {
             event.attendees.splice(index, 1); // Leave
         }

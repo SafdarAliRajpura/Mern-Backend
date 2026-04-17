@@ -105,6 +105,21 @@ exports.getMyTournaments = async (req, res) => {
     }
 };
 
+// @route   GET /api/tournaments/my-registrations
+// @desc    Get all tournament registrations of current user
+// @access  Private (Athlete)
+exports.getMyRegistrations = async (req, res) => {
+    try {
+        const registrations = await TournamentRegistration.find({ userId: req.user.id })
+            .populate('tournamentId')
+            .sort({ createdAt: -1 });
+        res.status(200).json({ success: true, data: registrations });
+    } catch (error) {
+        console.error("Fetch My Registrations Error:", error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 // @route   GET /api/tournaments/:id
 // @desc    Get single tournament
 // @access  Public

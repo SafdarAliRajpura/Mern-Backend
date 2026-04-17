@@ -8,13 +8,15 @@ const {
     updateTournament, 
     deleteTournament,
     registerTournament,
-    getTournamentRegistrations
+    getTournamentRegistrations,
+    getMyRegistrations
 } = require('../controllers/tournamentController');
 
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.get('/', getTournaments);
 router.get('/my-tournaments', protect, authorize('partner', 'admin'), getMyTournaments);
+router.get('/my-registrations', protect, getMyRegistrations);
 router.get('/:id', getTournamentById);
 
 // Public/Athlete registration

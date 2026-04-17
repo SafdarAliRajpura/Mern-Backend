@@ -3,6 +3,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendWelcomeEmail, sendPasswordChangeAlert } = require('../utils/sendEmail');
 const { notifyAdmins } = require('./notificationController');
+const Booking = require('../models/Booking');
+const Discussion = require('../models/Discussion');
+const TournamentRegistration = require('../models/TournamentRegistration');
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -175,10 +178,23 @@ const getMe = async (req, res) => {
             xp: { $gt: req.user.xp || 0 } 
         }) + 1;
 
-        // Spread the user doc and append the calculated rank
+        // Calculate dynamic stats
+        const [totalBookings, discussionsCreated, tournamentEntries] = await Promise.all([
+            Booking.countDocuments({ userId: req.user.id, status: { $ne: 'Cancelled' } }),
+            Discussion.countDocuments({ author: req.user.id }),
+            TournamentRegistration.countDocuments({ userId: req.user.id })
+        ]);
+
+        // Spread the user doc and append the calculated rank and dynamic stats
         const userData = {
             ...req.user._doc,
-            rank
+            rank,
+            stats: {
+                ...req.user.stats,
+                totalBookings,
+                discussionsCreated,
+                tournamentEntries
+            }
         };
 
         res.status(200).json({
@@ -298,7 +314,12 @@ const updateProfile = async (req, res) => {
                 primaryRole: user.primaryRole,
                 favoriteSports: user.favoriteSports,
                 socialLinks: user.socialLinks,
-                stats: user.stats,
+                stats: {
+                    ...user.stats,
+                    totalBookings: await Booking.countDocuments({ userId: user.id, status: { $ne: 'Cancelled' } }),
+                    discussionsCreated: await Discussion.countDocuments({ author: user.id }),
+                    tournamentEntries: await TournamentRegistration.countDocuments({ userId: user.id })
+                },
                 badges: user.badges,
                 isOnboarded: user.isOnboarded,
                 token: generateToken(user._id)

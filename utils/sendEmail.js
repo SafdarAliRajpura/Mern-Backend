@@ -415,6 +415,54 @@ const sendTournamentRegistrationEmail = ({ email, name, tournamentName, teamName
     });
 };
 
+/**
+ * Send Event Join Notification to Organizer
+ */
+const sendEventJoinNotification = ({ organizerEmail, organizerName, eventTitle, joinerName }) => {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM || '"Arena Pro Community" <hbrajpura110@gmail.com>',
+        to: organizerEmail,
+        subject: `New Athlete Alert! ${joinerName} just joined your ${eventTitle}! 🏟️`,
+        html: `
+            <div style="font-family: 'Segoe UI', system-ui, sans-serif; max-width: 600px; margin: auto; background-color: #0c0a09; border-radius: 32px; overflow: hidden; border: 1px solid #22c55e; color: #f8fafc;">
+                <div style="background: linear-gradient(135deg, #14532d 0%, #22c55e 100%); padding: 60px 40px; text-align: center;">
+                    <div style="display: inline-block; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 20px; margin-bottom: 20px;">
+                        <span style="font-size: 40px;">👤</span>
+                    </div>
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 950; letter-spacing: -1px; text-transform: uppercase; font-style: italic; color: #000;">Squad Member Added</h1>
+                </div>
+                
+                <div style="padding: 50px 40px;">
+                    <p style="font-size: 16px; margin-bottom: 30px; color: #a1a1aa; text-align: center;">
+                        Hello <strong style="color: #fff;">${organizerName}</strong>, your community event is gaining traction!
+                        <strong style="color: #22c55e;">${joinerName}</strong> has just reserved a spot in your squad.
+                    </p>
+                    
+                    <div style="background: #1c1917; border-radius: 24px; padding: 30px; border: 1px solid #292524; margin-bottom: 40px;">
+                        <p style="margin: 0 0 5px; font-size: 10px; font-weight: 900; color: #57534e; text-transform: uppercase; letter-spacing: 2px;">Target Event</p>
+                        <p style="margin: 0 0 20px; font-size: 18px; font-weight: 800; color: #fff;">${eventTitle}</p>
+                        
+                        <div style="height: 1px; background: #292524; margin-bottom: 20px;"></div>
+                        
+                        <p style="margin: 0 0 5px; font-size: 10px; font-weight: 900; color: #57534e; text-transform: uppercase; letter-spacing: 2px;">Joined Athlete</p>
+                        <p style="margin: 0; font-size: 18px; font-weight: 800; color: #22c55e;">${joinerName}</p>
+                    </div>
+
+                    <a href="http://localhost:5173/community" style="display: block; text-align: center; background-color: #f8fafc; color: #000; padding: 20px; border-radius: 16px; text-decoration: none; font-weight: 950; text-transform: uppercase; letter-spacing: 1px; font-size: 13px;">View Live Hub</a>
+                </div>
+
+                <div style="background-color: #000; padding: 30px; text-align: center; border-top: 1px solid #1c1917;">
+                    <p style="margin: 0; font-size: 10px; color: #44403c; letter-spacing: 1px; font-weight: 800; text-transform: uppercase;">ARENA PRO INTEL • COMMUNITY SYNC</p>
+                </div>
+            </div>
+        `
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log('Error sending event join notification:', error);
+        else console.log('Event join notification sent:', info.response);
+    });
+};
+
 module.exports = {
     sendWelcomeEmail,
     sendBanEmail,
@@ -425,6 +473,7 @@ module.exports = {
     sendBookingConfirmation,
     sendBookingCancellation,
     sendTournamentRegistrationEmail,
-    sendInquiryReplyEmail
+    sendInquiryReplyEmail,
+    sendEventJoinNotification
 };
 
