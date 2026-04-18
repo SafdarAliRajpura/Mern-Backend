@@ -20,4 +20,9 @@ const bookingSchema = new mongoose.Schema({
     checkInTime: { type: Date }
 }, { timestamps: true });
 
+// Tactical Indices for Query Acceleration
+bookingSchema.index({ userId: 1 });
+bookingSchema.index({ turfName: 1 });
+bookingSchema.index({ date: 1 });
+
 module.exports = mongoose.model('Booking', bookingSchema);

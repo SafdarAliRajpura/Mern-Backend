@@ -45,4 +45,8 @@ const TournamentRegistrationSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Tactical Indices
+TournamentRegistrationSchema.index({ tournamentId: 1 });
+TournamentRegistrationSchema.index({ userId: 1 });
+
 module.exports = mongoose.model('TournamentRegistration', TournamentRegistrationSchema);

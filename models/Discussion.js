@@ -38,4 +38,7 @@ const discussionSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Tactical Index
+discussionSchema.index({ author: 1 });
+
 module.exports = mongoose.model('Discussion', discussionSchema);

@@ -172,12 +172,6 @@ const loginUser = async (req, res) => {
 // @access  Private
 const getMe = async (req, res) => {
     try {
-        // Calculate global rank based on XP (only comparing with other 'user' role members)
-        const rank = await User.countDocuments({ 
-            role: 'user', 
-            xp: { $gt: req.user.xp || 0 } 
-        }) + 1;
-
         // Calculate dynamic stats
         const [totalBookings, discussionsCreated, tournamentEntries] = await Promise.all([
             Booking.countDocuments({ userId: req.user.id, status: { $ne: 'Cancelled' } }),
@@ -185,10 +179,30 @@ const getMe = async (req, res) => {
             TournamentRegistration.countDocuments({ userId: req.user.id })
         ]);
 
+        // Calculate dynamic XP
+        // 1 Booking = 100 XP, 1 Discussion = 50 XP, 1 Tournament = 200 XP
+        const calculatedXp = (totalBookings * 100) + (discussionsCreated * 50) + (tournamentEntries * 200);
+        
+        // Dynamic Skill Level
+        let calculatedLevel = 'Rookie';
+        if (calculatedXp >= 5000) calculatedLevel = 'Legend';
+        else if (calculatedXp >= 2500) calculatedLevel = 'Elite';
+        else if (calculatedXp >= 1000) calculatedLevel = 'Pro';
+        else if (calculatedXp >= 500) calculatedLevel = 'Semi-Pro';
+        else if (calculatedXp >= 100) calculatedLevel = 'Amateur';
+
+        // Calculate global rank based on XP (only comparing with other 'user' role members)
+        const rank = await User.countDocuments({ 
+            role: 'user', 
+            xp: { $gt: calculatedXp } 
+        }) + 1;
+
         // Spread the user doc and append the calculated rank and dynamic stats
         const userData = {
             ...req.user._doc,
             rank,
+            xp: calculatedXp,
+            skillLevel: calculatedLevel,
             stats: {
                 ...req.user.stats,
                 totalBookings,
@@ -295,6 +309,19 @@ const updateProfile = async (req, res) => {
         
         await user.save();
         
+        // Pre-calculate dynamic values
+        const b = await Booking.countDocuments({ userId: user.id, status: { $ne: 'Cancelled' } });
+        const d = await Discussion.countDocuments({ author: user.id });
+        const t = await TournamentRegistration.countDocuments({ userId: user.id });
+        const calculatedXp = (b * 100) + (d * 50) + (t * 200);
+        
+        let calculatedLevel = 'Rookie';
+        if (calculatedXp >= 5000) calculatedLevel = 'Legend';
+        else if (calculatedXp >= 2500) calculatedLevel = 'Elite';
+        else if (calculatedXp >= 1000) calculatedLevel = 'Pro';
+        else if (calculatedXp >= 500) calculatedLevel = 'Semi-Pro';
+        else if (calculatedXp >= 100) calculatedLevel = 'Amateur';
+
         res.status(200).json({
             success: true,
             message: 'Profile updated successfully',
@@ -308,21 +335,20 @@ const updateProfile = async (req, res) => {
                 businessName: user.businessName,
                 websiteLink: user.websiteLink,
                 role: user.role,
-                xp: user.xp,
-                skillLevel: user.skillLevel,
                 bio: user.bio,
                 primaryRole: user.primaryRole,
                 favoriteSports: user.favoriteSports,
                 socialLinks: user.socialLinks,
-                stats: {
-                    ...user.stats,
-                    totalBookings: await Booking.countDocuments({ userId: user.id, status: { $ne: 'Cancelled' } }),
-                    discussionsCreated: await Discussion.countDocuments({ author: user.id }),
-                    tournamentEntries: await TournamentRegistration.countDocuments({ userId: user.id })
-                },
                 badges: user.badges,
                 isOnboarded: user.isOnboarded,
-                token: generateToken(user._id)
+                token: generateToken(user._id),
+                stats: {
+                    totalBookings: b,
+                    discussionsCreated: d,
+                    tournamentEntries: t
+                },
+                xp: calculatedXp,
+                skillLevel: calculatedLevel
             }
         });
     } catch (error) {

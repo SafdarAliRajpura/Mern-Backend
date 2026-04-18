@@ -19,15 +19,16 @@ const getDashboardMetrics = async (req, res) => {
         // 1. Resolve Venue Ownership & Capacity
         let bookingsQuery = {};
         let totalPotentialSlotsPerDay = 0;
+        const userRole = req.user.role?.toLowerCase() || 'user';
         
-        if (req.user.role === 'partner') {
-            const myVenues = await Venue.find({ owner: req.user.id });
+        if (userRole === 'partner') {
+            const myVenues = await Venue.find({ owner: req.user.id }).lean();
             const myVenueNames = myVenues.map(v => v.name);
             bookingsQuery = { turfName: { $in: myVenueNames } };
             totalPotentialSlotsPerDay = myVenues.reduce((sum, v) => sum + (v.slots?.length || 0), 0);
-        } else {
+        } else if (userRole === 'admin') {
             // Admin sees everything
-            const allVenues = await Venue.find({});
+            const allVenues = await Venue.find({}).lean();
             totalPotentialSlotsPerDay = allVenues.reduce((sum, v) => sum + (v.slots?.length || 0), 0);
         }
 
@@ -38,7 +39,7 @@ const getDashboardMetrics = async (req, res) => {
         });
 
         const currentRevenue = currentBookings
-            .filter(b => ['Confirmed', 'Completed'].includes(b.status))
+            .filter(b => ['Confirmed', 'confirmed', 'Completed', 'completed'].includes(b.status))
             .reduce((sum, b) => {
                 const num = parseInt(b.price ? b.price.toString().replace(/[^0-9]/g, '') : '0', 10);
                 return sum + (isNaN(num) ? 0 : num);
@@ -82,7 +83,7 @@ const getDashboardMetrics = async (req, res) => {
         const totalBookings = await Booking.countDocuments(bookingsQuery);
         const allConfirmed = await Booking.find({ 
             ...bookingsQuery, 
-            status: { $in: ['Confirmed', 'Completed'] } 
+            status: { $in: ['Confirmed', 'confirmed', 'Completed', 'completed'] } 
         });
         
         const totalRevenue = allConfirmed.reduce((sum, b) => {
@@ -90,12 +91,12 @@ const getDashboardMetrics = async (req, res) => {
             return sum + (isNaN(num) ? 0 : num);
         }, 0);
         
-        const totalRegisteredUsers = await User.countDocuments({});
+        const totalRegisteredUsers = await User.countDocuments({ role: { $ne: 'partner' } });
 
         const distinctUserIds = await Booking.distinct('userId', bookingsQuery);
         const distinctUserNames = await Booking.distinct('user', bookingsQuery);
         const activePlayersCount = new Set([
-            ...distinctUserIds.map(id => id.toString()),
+            ...distinctUserIds.filter(id => !!id).map(id => id.toString()),
             ...distinctUserNames
         ]).size;
 
@@ -110,7 +111,7 @@ const getDashboardMetrics = async (req, res) => {
                 ...bookingsQuery,
                 status: { $in: ['Confirmed', 'Completed'] },
                 createdAt: { $gte: start, $lte: end }
-            });
+            }).lean();
 
             const monthRev = monthBookings.reduce((sum, b) => {
                 const num = parseInt(b.price ? b.price.toString().replace(/[^0-9]/g, '') : '0', 10);
@@ -182,16 +183,17 @@ const getDashboardMetrics = async (req, res) => {
 
         // 9. Advanced Player Intelligence (Bookings + Tournaments)
         const TournamentRegistration = require('../models/TournamentRegistration');
-        const myTournaments = await Tournament.find({ owner: req.user.id });
+        const tournamentsQuery = userRole === 'admin' ? {} : { owner: req.user.id };
+        const myTournaments = await Tournament.find(tournamentsQuery).lean();
         const tournamentIds = myTournaments.map(t => t._id);
         
-        const tournamentRegs = await TournamentRegistration.find({ tournamentId: { $in: tournamentIds } });
+        const tournamentRegs = await TournamentRegistration.find({ tournamentId: { $in: tournamentIds } }).lean();
         
-        const tournamentPlayerIds = tournamentRegs.map(reg => reg.userId.toString());
+        const tournamentPlayerIds = tournamentRegs.map(reg => reg.userId?.toString()).filter(id => !!id);
         const tournamentPlayerNames = tournamentRegs.flatMap(reg => reg.players || []);
         
         const finalActivePlayersCount = new Set([
-            ...distinctUserIds.map(id => id.toString()),
+            ...distinctUserIds.filter(id => !!id).map(id => id.toString()),
             ...distinctUserNames,
             ...tournamentPlayerIds,
             ...tournamentPlayerNames
@@ -236,7 +238,7 @@ const getDashboardMetrics = async (req, res) => {
 const getPlatformStats = async (req, res) => {
     try {
         const [totalUsers, totalVenues, totalTournaments, topVenue, recentUsers] = await Promise.all([
-            User.countDocuments({}),
+            User.countDocuments({ role: { $ne: 'partner' } }),
             Venue.countDocuments({ status: { $regex: /^active$/i } }),
             Tournament.countDocuments({ status: { $in: ['Upcoming', 'Ongoing'] } }),
             Venue.findOne({ status: { $regex: /^active$/i } }).sort({ rating: -1 }),

@@ -26,4 +26,9 @@ const venueSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Tactical Indices
+venueSchema.index({ owner: 1 });
+venueSchema.index({ status: 1 });
+venueSchema.index({ name: 1 });
+
 module.exports = mongoose.model('Venue', venueSchema);

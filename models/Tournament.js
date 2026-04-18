@@ -20,4 +20,8 @@ const tournamentSchema = new mongoose.Schema({
     lastRegistrationDate: { type: String }
 }, { timestamps: true });
 
+// Tactical Indices
+tournamentSchema.index({ owner: 1 });
+tournamentSchema.index({ status: 1 });
+
 module.exports = mongoose.model('Tournament', tournamentSchema);
