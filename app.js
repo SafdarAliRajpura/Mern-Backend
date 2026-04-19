@@ -56,3 +56,8 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes');
 }).catch((error) => {
   console.log('Failed to connect to database', error);
 });
+
+// Handle unhandled promise rejections to prevent silent crashes
+process.on('unhandledRejection', (err, promise) => {
+  console.error(`Unhandled Rejection: ${err.message}`);
+});

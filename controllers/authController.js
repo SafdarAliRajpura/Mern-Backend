@@ -362,7 +362,8 @@ const updateProfile = async (req, res) => {
 // @access  Private
 const changePassword = async (req, res) => {
     try {
-        const { currentPassword, newPassword } = req.body;
+        const { currentPassword, oldPassword, newPassword } = req.body;
+        const passwordToVerify = currentPassword || oldPassword;
         
         const user = await User.findById(req.user.id).select('+password');
         if (!user) {
@@ -371,7 +372,10 @@ const changePassword = async (req, res) => {
         
         // If user already has a password, verify current password
         if (user.password) {
-            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!passwordToVerify) {
+                return res.status(400).json({ success: false, message: 'Current password is required' });
+            }
+            const isMatch = await bcrypt.compare(passwordToVerify, user.password);
             if (!isMatch) {
                 return res.status(400).json({ success: false, message: 'Incorrect current password' });
             }
@@ -403,6 +407,20 @@ const changePassword = async (req, res) => {
     }
 };
 
+// @desc    Update push token
+// @route   PUT /api/auth/push-token
+// @access  Private
+const updatePushToken = async (req, res) => {
+    try {
+        const { pushToken } = req.body;
+        await User.findByIdAndUpdate(req.user.id, { pushToken });
+        res.status(200).json({ success: true, message: 'Push token updated' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
@@ -410,4 +428,5 @@ module.exports = {
     onboardPartner,
     updateProfile,
     changePassword,
+    updatePushToken
 };

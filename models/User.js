@@ -95,6 +95,7 @@ const userSchema = new mongoose.Schema(
       color: String,
       unlockedAt: { type: Date, default: Date.now }
     }],
+    pushToken: { type: String, default: null },
   },
   {
     timestamps: true,

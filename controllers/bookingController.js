@@ -191,15 +191,28 @@ exports.updateBookingStatus = async (req, res) => {
 // @access  Partner/Admin
 exports.verifyCheckIn = async (req, res) => {
     try {
-        // Validation: Ensure the ID is a valid MongoDB 24-char hex string
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        let bookingId = req.params.id;
+
+        // Support for 15-digit manual ID check-in
+        if (bookingId.length === 15) {
+            console.log("Attempting 15-digit lookup for:", bookingId);
+            const allBookings = await Booking.find({ status: { $in: ['Confirmed', 'Pending'] } });
+            const matchingBooking = allBookings.find(b => b._id.toString().toUpperCase().endsWith(bookingId.toUpperCase()));
+            
+            if (!matchingBooking) {
+                console.log("No match found for 15-digit ID");
+                return res.status(404).json({ success: false, message: 'Invalid 15-digit Pass ID. Reference not found.' });
+            }
+            bookingId = matchingBooking._id;
+            console.log("Match found! Resolved to:", bookingId);
+        } else if (!mongoose.Types.ObjectId.isValid(bookingId)) {
             return res.status(400).json({ 
                 success: false, 
-                message: 'Invalid Matrix Format. The Ticket ID must be exactly 24 characters.' 
+                message: 'Invalid Matrix Format. Pass ID must be 15 or 24 characters.' 
             });
         }
 
-        const booking = await Booking.findById(req.params.id).populate('userId', 'first_name last_name');
+        const booking = await Booking.findById(bookingId).populate('userId', 'first_name last_name');
         
         if (!booking) {
             return res.status(404).json({ success: false, message: 'Invalid Match ID. Reference not found in tactical ledger.' });

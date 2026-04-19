@@ -13,7 +13,7 @@ async function checkDatabase() {
         
         const venues = await Venue.find();
         console.log('VENUE_LIST:');
-        venues.forEach(v => console.log(`${v.name} | OWNER: ${v.owner || 'NONE'}`));
+        venues.forEach(v => console.log(`${v.name} | SLOTS: ${v.slots?.length || 0} | OWNER: ${v.owner || 'NONE'}`));
         
         await mongoose.disconnect();
     } catch (err) { console.error(err); }
