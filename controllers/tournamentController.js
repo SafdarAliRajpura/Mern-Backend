@@ -83,7 +83,9 @@ exports.getTournaments = async (req, res) => {
         if (req.query.owner) {
             query = { owner: req.query.owner };
         }
-        const tournaments = await Tournament.find(query).populate('owner', 'name email');
+        const tournaments = await Tournament.find(query)
+            .select('-description') // Exclude long descriptions for list performance
+            .populate('owner', 'name email');
         res.status(200).json({ success: true, count: tournaments.length, data: tournaments });
     } catch (error) {
         console.error("Get Tournaments Error:", error);
@@ -165,7 +167,7 @@ exports.createTournament = async (req, res) => {
 exports.updateTournament = async (req, res) => {
     try {
         const tournament = await Tournament.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
+            returnDocument: 'after',
             runValidators: true
         });
         if (!tournament) {

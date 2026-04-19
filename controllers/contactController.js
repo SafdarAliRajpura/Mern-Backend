@@ -32,7 +32,7 @@ exports.getContacts = async (req, res) => {
 exports.markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
-    const contact = await Contact.findByIdAndUpdate(id, { status: 'read' }, { new: true });
+    const contact = await Contact.findByIdAndUpdate(id, { status: 'read' }, { returnDocument: 'after' });
     
     if (!contact) {
       return res.status(404).json({ error: 'Message not found.' });

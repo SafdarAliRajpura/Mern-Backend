@@ -31,6 +31,7 @@ exports.getVenues = async (req, res) => {
         }
 
         const venues = await Venue.find(query)
+            .select('-images -amenities -slots -courts') // Elite optimization for list speed
             .populate('owner', 'first_name last_name user_profile')
             .sort({ rating: -1, createdAt: -1 });
 
