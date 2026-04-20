@@ -29,8 +29,12 @@ const protect = async (req, res, next) => {
         console.log('Invalid Token Received:', token);
         return res.status(401).json({ success: false, message: 'Session expired or invalid. Please login again.' });
       } else {
-        console.error(`Critical Database Error during Auth:`, error.message);
-        return res.status(503).json({ success: false, message: 'Tactical Service Unavailable: Database offline.' });
+        console.error(`[AUTH SCOUTER] Critical Database Failure:`, error);
+        return res.status(503).json({ 
+          success: false, 
+          message: 'Tactical Service Unavailable: The arena database is currently unresponsive. Re-attempting signal lock.',
+          error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
       }
     }
   }

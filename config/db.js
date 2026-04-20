@@ -5,8 +5,8 @@ const connectDB = async () => {
     // Force IPv4 to avoid IPv6/localhost resolution issues on Windows
     const connStr = process.env.MONGODB_URI.replace('localhost', '127.0.0.1');
     
-    // Disable buffering so queries fail fast when DB is down
-    mongoose.set('bufferCommands', false);
+    // Enable buffering so brief connection drifts don't crash requests
+    mongoose.set('bufferCommands', true);
     
     const conn = await mongoose.connect(connStr, {
       serverSelectionTimeoutMS: 5000, // Wait 5 seconds before failing
