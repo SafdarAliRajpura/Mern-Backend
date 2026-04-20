@@ -20,6 +20,7 @@ const venueSchema = new mongoose.Schema({
     }],
     rating: { type: Number, default: 4.5 },
     distance: { type: String, default: '2.5 km' },
+    description: { type: String, default: 'Premium sports arena with professional-grade turf, advanced floodlights, and top-tier amenities for an elite playing experience.' },
     coordinates: {
         lat: { type: Number, default: 23.0225 }, // Default to a central location (Ahmedabad)
         lng: { type: Number, default: 72.5714 }

@@ -24,9 +24,14 @@ const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error(`JWT Error [${error.name}]:`, error.message);
-      console.log('Malformed Token Received:', token);
-      return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
+      if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+        console.error(`JWT Auth Failure [${error.name}]:`, error.message);
+        console.log('Invalid Token Received:', token);
+        return res.status(401).json({ success: false, message: 'Session expired or invalid. Please login again.' });
+      } else {
+        console.error(`Critical Database Error during Auth:`, error.message);
+        return res.status(503).json({ success: false, message: 'Tactical Service Unavailable: Database offline.' });
+      }
     }
   }
 

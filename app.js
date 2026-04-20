@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 
 // Load env vars
@@ -30,6 +31,16 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes');
   const notificationRoutes = require('./routes/notificationRoutes');
   const searchRoutes = require('./routes/searchRoutes');
   const paymentRoutes = require('./routes/paymentRoutes');
+
+  // System Status route
+  app.get('/api/status', (req, res) => {
+    const dbStatus = mongoose.connection.readyState === 1 ? 'Operational' : 'Disconnected';
+    res.json({
+      status: 'Active',
+      database: dbStatus,
+      timestamp: new Date().toISOString()
+    });
+  });
 
   // Main route
   app.get('/', (req, res) => {

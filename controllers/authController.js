@@ -172,36 +172,35 @@ const loginUser = async (req, res) => {
 // @access  Private
 const getMe = async (req, res) => {
     try {
-        // Calculate dynamic stats
+        // Calculate dynamic stats for dashboard accuracy
         const [totalBookings, discussionsCreated, tournamentEntries] = await Promise.all([
             Booking.countDocuments({ userId: req.user.id, status: { $ne: 'Cancelled' } }),
             Discussion.countDocuments({ author: req.user.id }),
             TournamentRegistration.countDocuments({ userId: req.user.id })
         ]);
 
-        // Calculate dynamic XP
-        // 1 Booking = 100 XP, 1 Discussion = 50 XP, 1 Tournament = 200 XP
-        const calculatedXp = (totalBookings * 100) + (discussionsCreated * 50) + (tournamentEntries * 200);
+        // Trust the PERSISTED XP in the database (it includes check-ins and special rewards)
+        const realXp = req.user.xp || 0;
         
-        // Dynamic Skill Level
+        // Ensure skill level is synced with current real XP
         let calculatedLevel = 'Rookie';
-        if (calculatedXp >= 5000) calculatedLevel = 'Legend';
-        else if (calculatedXp >= 2500) calculatedLevel = 'Elite';
-        else if (calculatedXp >= 1000) calculatedLevel = 'Pro';
-        else if (calculatedXp >= 500) calculatedLevel = 'Semi-Pro';
-        else if (calculatedXp >= 100) calculatedLevel = 'Amateur';
+        if (realXp >= 5000) calculatedLevel = 'Legend';
+        else if (realXp >= 2500) calculatedLevel = 'Elite';
+        else if (realXp >= 1000) calculatedLevel = 'Pro';
+        else if (realXp >= 500) calculatedLevel = 'Semi-Pro';
+        else if (realXp >= 100) calculatedLevel = 'Amateur';
 
-        // Calculate global rank based on XP (only comparing with other 'user' role members)
+        // Calculate global rank based on REAL XP
         const rank = await User.countDocuments({ 
             role: 'user', 
-            xp: { $gt: calculatedXp } 
+            xp: { $gt: realXp } 
         }) + 1;
 
-        // Spread the user doc and append the calculated rank and dynamic stats
+        // Spread the user doc and append the verified rank and dynamic stats
         const userData = {
             ...req.user._doc,
             rank,
-            xp: calculatedXp,
+            xp: realXp,
             skillLevel: calculatedLevel,
             stats: {
                 ...req.user.stats,

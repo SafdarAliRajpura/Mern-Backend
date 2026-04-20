@@ -4,13 +4,18 @@ const Booking = require('../models/Booking');
 const Venue = require('../models/Venue');
 const { createNotification } = require('./notificationController');
 
-// Initialize Razorpay
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+// Initialize Razorpay lazily to ensure env vars are loaded
+const getRazorpay = () => {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+        console.error('[RAZORPAY CRITICAL] Keys missing in .env!');
+    }
+    return new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+};
 
-console.log(`[RAZORPAY] Initialized with Key: ${process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_ID.substring(0, 8) + '...' : 'MISSING'}`);
+console.log(`[RAZORPAY] Engine ready. Key ID (from env): ${process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_ID.substring(0, 8) + '...' : 'MISSING'}`);
 
 // @route   POST /api/payments/order
 // @desc    Create a Razorpay Order
@@ -19,15 +24,22 @@ exports.createOrder = async (req, res) => {
     try {
         const { amount, bookingData } = req.body;
 
-        if (!amount) {
-            return res.status(400).json({ success: false, message: 'Amount is required' });
+        console.log(`[ORDER ENGINE] Incoming Request | Amount: ₹${amount}`);
+        
+        if (!amount || isNaN(amount)) {
+            console.error('[ORDER ERROR] Invalid or missing amount:', amount);
+            return res.status(400).json({ success: false, message: 'Valid amount is required' });
         }
 
-        console.log(`[ORDER CREATION] Initiating order for ${req.user.first_name} | Amount: ₹${amount}`);
+        if (!bookingData || !bookingData.turfName || !bookingData.date || !bookingData.timeSlot) {
+            console.error('[ORDER ERROR] Incomplete booking data:', bookingData);
+            return res.status(400).json({ success: false, message: 'Complete booking data is required' });
+        }
+
+        const { turfName, date, timeSlot } = bookingData;
+        console.log(`[ORDER ENGINE] Checking availability for ${turfName} on ${date} @ ${timeSlot}`);
 
         // --- Tactical Concurrency Guard ---
-        // Verify slot availability before initiating financial flow
-        const { turfName, date, timeSlot } = bookingData;
         const conflict = await Booking.findOne({
             turfName,
             date,
@@ -36,31 +48,47 @@ exports.createOrder = async (req, res) => {
         });
 
         if (conflict) {
+            console.warn(`[ORDER CONFLICT] Slot already engaged: ${turfName} | ${date} | ${timeSlot}`);
             return res.status(400).json({ 
                 success: false, 
-                message: `Tactical Conflict! This slot was secured by another athlete while you were processing. Please choose another time.` 
+                message: `Tactical Conflict! This slot was secured by another athlete. Please choose another time.` 
             });
         }
         // ----------------------------------
 
-        // Razorpay expects amount in paise (multiply by 100)
-        const options = {
+        const orderOptions = {
             amount: Math.round(amount * 100),
             currency: "INR",
             receipt: `receipt_${Date.now()}`
         };
 
-        const order = await razorpay.orders.create(options);
+        console.log(`[RAZORPAY] Creating order with Key ID: ${process.env.RAZORPAY_KEY_ID} | Options:`, orderOptions);
+        
+        let order;
+        try {
+            const rzp = getRazorpay();
+            order = await rzp.orders.create(orderOptions);
+            console.log(`[RAZORPAY] Order created successfully: ${order.id}`);
+        } catch (rzpErr) {
+            console.error("[RAZORPAY CRITICAL ERROR]:", rzpErr);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Razorpay Gateway Failure', 
+                error: rzpErr.description || rzpErr.message 
+            });
+        }
 
         // Pre-calculate commission for our ledger
         const commissionRate = process.env.COMMISSION_RATE || 10;
         const adminCommission = (amount * commissionRate) / 100;
         const partnerShare = amount - adminCommission;
 
+        console.log(`[LEDGER] Creating pending booking for Order: ${order.id}`);
+        
         // Create a Pending booking in our database linked to this order
         const newBooking = await Booking.create({
             ...bookingData,
-            userId: req.user.id,
+            userId: req.user._id,
             user: `${req.user.first_name} ${req.user.last_name}`,
             status: 'Pending',
             orderId: order.id,
@@ -75,8 +103,12 @@ exports.createOrder = async (req, res) => {
             bookingId: newBooking._id
         });
     } catch (error) {
-        console.error("Create Order Error:", error);
-        res.status(500).json({ success: false, message: 'Failed to initiate payment engine' });
+        console.error("[CRITICAL BACKEND ERROR]:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Internal Financial Engine Failure',
+            error: error.message
+        });
     }
 };
 
@@ -155,7 +187,7 @@ exports.verifyPayment = async (req, res) => {
 exports.renderCheckout = async (req, res) => {
     try {
         const { orderId } = req.params;
-        console.log(`[PAYMENT GATEWAY] Initializing checkout for Order: ${orderId}`);
+        console.log(`[PAYMENT GATEWAY] Initializing checkout for Order: ${orderId} | Key ID: ${process.env.RAZORPAY_KEY_ID}`);
         
         const booking = await Booking.findOne({ orderId }).populate('userId', 'email first_name last_name');
         
@@ -165,6 +197,7 @@ exports.renderCheckout = async (req, res) => {
         }
 
         const amountPaise = parseInt(booking.price) * 100;
+        console.log(`[PAYMENT GATEWAY] Injecting Key: ${process.env.RAZORPAY_KEY_ID} for amount: ${amountPaise} paise`);
 
         const html = `
             <!DOCTYPE html>

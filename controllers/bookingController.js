@@ -147,6 +147,7 @@ exports.updateBookingStatus = async (req, res) => {
         // set color based on status for UI ease
         let color = 'bg-yellow-500'; // Pending default
         if (status === 'Confirmed') color = 'bg-emerald-500';
+        if (status === 'Completed') color = 'bg-blue-500';
         if (status === 'Cancelled' || status === 'Rejected') color = 'bg-red-500';
 
         const booking = await Booking.findByIdAndUpdate(
@@ -244,6 +245,7 @@ exports.verifyCheckIn = async (req, res) => {
         booking.isCheckedIn = true;
         booking.checkInTime = new Date();
         booking.status = 'Completed'; // Auto-complete on check-in
+        booking.color = 'bg-blue-500';
         await booking.save();
 
         // Reward for Attendance
