@@ -31,7 +31,8 @@ exports.createDiscussion = async (req, res) => {
 
     res.status(201).json(newDiscussion);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create discussion' });
+    console.error("Discussion Creation Error:", error);
+    res.status(500).json({ success: false, message: `Failed to create discussion: ${error.message}` });
   }
 };
 

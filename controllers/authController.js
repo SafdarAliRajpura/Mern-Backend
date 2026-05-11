@@ -135,6 +135,14 @@ const loginUser = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Your application is currently PENDING review by the Super Admin.' });
         }
 
+        // Check if user has a password set (Pending partners might not)
+        if (!user.password) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Account not fully configured. Please set a password or contact support.' 
+            });
+        }
+
         // Check password match
         const isMatch = await bcrypt.compare(password, user.password);
 

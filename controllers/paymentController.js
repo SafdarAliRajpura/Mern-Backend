@@ -198,6 +198,7 @@ exports.renderCheckout = async (req, res) => {
 
         const amountPaise = parseInt(booking.price) * 100;
         console.log(`[PAYMENT GATEWAY] Injecting Key: ${process.env.RAZORPAY_KEY_ID} for amount: ${amountPaise} paise`);
+        const baseUrl = req.protocol + '://' + req.get('host');
 
         const html = `
             <!DOCTYPE html>
@@ -236,12 +237,13 @@ exports.renderCheckout = async (req, res) => {
                         try {
                             var options = {
                                 "key": "${String(process.env.RAZORPAY_KEY_ID).trim()}",
+                                "amount": "${amountPaise}",
+                                "currency": "INR",
                                 "order_id": "${orderId}",
                                 "name": "Arena Pro",
                                 "description": ${JSON.stringify("Booking: " + booking.turfName)},
-                                "handler": function (response){
-                                    window.location.href = "footballturf://payment-success?razorpay_payment_id=" + response.razorpay_payment_id + "&razorpay_order_id=" + response.razorpay_order_id + "&razorpay_signature=" + response.razorpay_signature + "&bookingId=${booking._id}";
-                                },
+                                "callback_url": "${baseUrl}/api/payments/callback?bookingId=${booking._id}",
+                                "redirect": true,
                                 "prefill": {
                                     "name": ${JSON.stringify(booking.user)},
                                     "email": "${booking.userId?.email || 'athlete@arena.pro'}",
@@ -270,5 +272,28 @@ exports.renderCheckout = async (req, res) => {
     } catch (error) {
         console.error("Render Checkout Error:", error);
         res.status(500).send('Tactical Error: Failed to launch financial gateway.');
+    }
+};
+
+// @route   POST /api/payments/callback
+// @desc    Handle Razorpay full-page redirect to avoid WebView popup blockers
+// @access  Public
+exports.paymentCallback = async (req, res) => {
+    try {
+        console.log(`[PAYMENT GATEWAY] Received secure callback from Bank via Razorpay.`);
+        const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+        const bookingId = req.query.bookingId;
+
+        if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+            console.error('[PAYMENT GATEWAY] Missing signature parameters in callback!');
+            return res.redirect('footballturf://payment-cancel');
+        }
+
+        // Bridge back into the React Native WebView deep link interceptor!
+        const deepLink = `footballturf://payment-success?razorpay_payment_id=${razorpay_payment_id}&razorpay_order_id=${razorpay_order_id}&razorpay_signature=${razorpay_signature}&bookingId=${bookingId}`;
+        res.redirect(deepLink);
+    } catch (error) {
+        console.error("Callback Processing Error:", error);
+        res.redirect('footballturf://payment-cancel');
     }
 };
