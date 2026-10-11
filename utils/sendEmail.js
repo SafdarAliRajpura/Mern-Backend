@@ -30,7 +30,7 @@ const sendWelcomeEmail = ({ email, name }) => {
                         <h4 style="margin: 0 0 10px; color: #10b981; text-transform: uppercase; font-size: 13px; letter-spacing: 2px;">Your Advantage</h4>
                         <p style="margin: 0; font-size: 14px; color: #94a3b8;">Instantly book premium turfs, track your match history, and climb the community leaderboards.</p>
                     </div>
-                    <a href="http://localhost:5173/venues" style="display: block; text-align: center; background-color: #f8fafc; color: #000; padding: 18px; border-radius: 12px; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">Find Your Next Pitch</a>
+                    <a href="http://localhost:3000/venues" style="display: block; text-align: center; background-color: #f8fafc; color: #000; padding: 18px; border-radius: 12px; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">Find Your Next Pitch</a>
                 </div>
                 <div style="background-color: #020617; padding: 30px; text-align: center; border-top: 1px solid #1e293b;">
                     <p style="margin: 0; font-size: 12px; color: #475569; letter-spacing: 1px; font-weight: 700;">ARENA PRO ELITE • TRANSFORMING SPORTS</p>
@@ -89,7 +89,7 @@ const sendUnbanEmail = ({ email, name }) => {
                 <div style="padding: 40px;">
                     <p style="font-size: 16px;">Great news, ${name}!</p>
                     <p>Your account has been fully reinstated. You can now log back in and continue booking your favorite turfs.</p>
-                    <a href="http://localhost:5173/login" style="display: inline-block; margin-top: 20px; background: #22c55e; color: #000; padding: 12px 30px; border-radius: 10px; font-weight: 800; text-decoration: none; text-transform: uppercase; font-size: 12px;">Login Now</a>
+                    <a href="http://localhost:3000/login" style="display: inline-block; margin-top: 20px; background: #22c55e; color: #000; padding: 12px 30px; border-radius: 10px; font-weight: 800; text-decoration: none; text-transform: uppercase; font-size: 12px;">Login Now</a>
                 </div>
             </div>
         `
@@ -130,7 +130,7 @@ const sendPartnerApprovalEmail = ({ email, name, turfName, password }) => {
                         </div>
                     </div>
 
-                    <a href="http://localhost:5173/partner/login" style="display: block; text-align: center; background-color: #f8fafc; color: #000; padding: 20px; border-radius: 16px; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; font-size: 14px; box-shadow: 0 10px 30px rgba(0,255,0,0.1);">Launch Partner Dashboard</a>
+                    <a href="http://localhost:3000/partner/login" style="display: block; text-align: center; background-color: #f8fafc; color: #000; padding: 20px; border-radius: 16px; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; font-size: 14px; box-shadow: 0 10px 30px rgba(0,255,0,0.1);">Launch Partner Dashboard</a>
                     
                     <p style="text-align: center; font-size: 12px; color: #475569; margin-top: 30px;">For security, please change your password immediately after your first login.</p>
                 </div>
@@ -333,7 +333,7 @@ const sendBookingCancellation = ({ email, name, venueName, date, timeSlot }) => 
                         This reservation has been successfully voided in our systems. Any transactional credits will be processed in accordance with the Arena Pro Service Agreement.
                     </p>
                     
-                    <a href="http://localhost:5173/venues" style="display: block; text-align: center; background: #ffffff; color: #000000; padding: 22px; border-radius: 18px; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px; transition: all 0.3s ease;">
+                    <a href="http://localhost:3000/venues" style="display: block; text-align: center; background: #ffffff; color: #000000; padding: 22px; border-radius: 18px; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px; transition: all 0.3s ease;">
                         Re-deploy Session
                     </a>
                 </div>
@@ -400,7 +400,7 @@ const sendTournamentRegistrationEmail = ({ email, name, tournamentName, teamName
                         `).join('')}
                     </div>
 
-                    <a href="http://localhost:5173/profile" style="display: block; text-align: center; background-color: #facc15; color: #000; padding: 22px; border-radius: 16px; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; font-size: 13px; box-shadow: 0 10px 40px rgba(250, 204, 21, 0.15);">View Your Match Center</a>
+                    <a href="http://localhost:3000/profile" style="display: block; text-align: center; background-color: #facc15; color: #000; padding: 22px; border-radius: 16px; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; font-size: 13px; box-shadow: 0 10px 40px rgba(250, 204, 21, 0.15);">View Your Match Center</a>
                 </div>
 
                 <div style="background-color: #000; padding: 35px; text-align: center; border-top: 1px solid #1e293b;">
@@ -448,7 +448,7 @@ const sendEventJoinNotification = ({ organizerEmail, organizerName, eventTitle, 
                         <p style="margin: 0; font-size: 18px; font-weight: 800; color: #22c55e;">${joinerName}</p>
                     </div>
 
-                    <a href="http://localhost:5173/community" style="display: block; text-align: center; background-color: #f8fafc; color: #000; padding: 20px; border-radius: 16px; text-decoration: none; font-weight: 950; text-transform: uppercase; letter-spacing: 1px; font-size: 13px;">View Live Hub</a>
+                    <a href="http://localhost:3000/community" style="display: block; text-align: center; background-color: #f8fafc; color: #000; padding: 20px; border-radius: 16px; text-decoration: none; font-weight: 950; text-transform: uppercase; letter-spacing: 1px; font-size: 13px;">View Live Hub</a>
                 </div>
 
                 <div style="background-color: #000; padding: 30px; text-align: center; border-top: 1px solid #1c1917;">

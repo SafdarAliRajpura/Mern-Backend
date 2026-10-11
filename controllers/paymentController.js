@@ -2,7 +2,9 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const Booking = require('../models/Booking');
 const Venue = require('../models/Venue');
+const User = require('../models/User');
 const { createNotification } = require('./notificationController');
+const { sendBookingConfirmation } = require('../utils/sendEmail');
 
 // Initialize Razorpay lazily to ensure env vars are loaded
 const getRazorpay = () => {
@@ -143,7 +145,7 @@ exports.verifyPayment = async (req, res) => {
 
             // Trigger Real-time System Notifications
             if (booking) {
-                // 1. Notify the Athlete
+                // 1. Notify the Athlete (in-app)
                 await createNotification({
                     recipient: booking.userId,
                     type: 'BOOKING',
@@ -151,7 +153,24 @@ exports.verifyPayment = async (req, res) => {
                     link: '/bookings'
                 });
 
-                // 2. Notify the Venue Partner
+                // 2. Send Booking Confirmation Email to the User
+                try {
+                    const user = await User.findById(booking.userId).select('email first_name last_name');
+                    if (user && user.email) {
+                        sendBookingConfirmation({
+                            email: user.email,
+                            name: user.first_name || booking.user || 'Athlete',
+                            venueName: booking.turfName,
+                            date: booking.date,
+                            timeSlot: booking.timeSlot
+                        });
+                        console.log(`[EMAIL] Booking confirmation sent to ${user.email}`);
+                    }
+                } catch (emailErr) {
+                    console.error('[EMAIL] Failed to send booking confirmation:', emailErr.message);
+                }
+
+                // 3. Notify the Venue Partner (in-app)
                 try {
                     const venue = await Venue.findOne({ name: booking.turfName });
                     if (venue && venue.owner) {

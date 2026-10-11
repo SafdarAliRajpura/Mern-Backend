@@ -31,6 +31,7 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes');
   const notificationRoutes = require('./routes/notificationRoutes');
   const searchRoutes = require('./routes/searchRoutes');
   const paymentRoutes = require('./routes/paymentRoutes');
+  const iotRoutes = require('./routes/iotRoutes');
 
   // System Status route
   app.get('/api/status', (req, res) => {
@@ -61,6 +62,7 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes');
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/search', searchRoutes);
   app.use('/api/payments', paymentRoutes);
+  app.use('/api/iot', iotRoutes);
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT,'0.0.0.0', () => console.log(`Server running on port ${PORT}`));
