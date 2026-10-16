@@ -4,7 +4,7 @@ const playerNodeSchema = new mongoose.Schema({
     id: { type: String, required: true },
     name: { type: String, default: 'Player' },
     number: { type: Number, default: 10 },
-    role: { type: String, enum: ['GK', 'DEF', 'MID', 'FWD', 'SUB'], default: 'MID' },
+    role: { type: String, default: 'MID' },
     isCaptain: { type: Boolean, default: false },
     x: { type: Number, required: true }, // Percentage (0-100)
     y: { type: Number, required: true }, // Percentage (0-100)
@@ -43,7 +43,6 @@ const tacticBoardSchema = new mongoose.Schema({
     },
     pitchFormat: {
         type: String,
-        enum: ['5v5', '7v7', '11v11'],
         default: '5v5'
     },
     formation: {
