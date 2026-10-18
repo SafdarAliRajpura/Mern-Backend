@@ -32,6 +32,7 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes');
   const searchRoutes = require('./routes/searchRoutes');
   const paymentRoutes = require('./routes/paymentRoutes');
   const tacticRoutes = require('./routes/tacticRoutes');
+  const scorecardRoutes = require('./routes/scorecardRoutes');
 
   // System Status route
   app.get('/api/status', (req, res) => {
@@ -63,6 +64,7 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes');
   app.use('/api/search', searchRoutes);
   app.use('/api/payments', paymentRoutes);
   app.use('/api/tactics', tacticRoutes);
+  app.use('/api/scorecards', scorecardRoutes);
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT,'0.0.0.0', () => console.log(`Server running on port ${PORT}`));
