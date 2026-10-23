@@ -25,7 +25,7 @@ connectDB().then(() => {
   const reviewRoutes = require('./routes/reviewRoutes');
   const tournamentRoutes = require('./routes/tournamentRoutes');
   const analyticsRoutes = require('./routes/analyticsRoutes');
-const leaderboardRoutes = require('./routes/leaderboardRoutes');
+  const leaderboardRoutes = require('./routes/leaderboardRoutes');
   const contactRoutes = require('./routes/contactRoutes');
   const communityRoutes = require('./routes/communityRoutes');
   const notificationRoutes = require('./routes/notificationRoutes');
@@ -33,6 +33,7 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes');
   const paymentRoutes = require('./routes/paymentRoutes');
   const tacticRoutes = require('./routes/tacticRoutes');
   const scorecardRoutes = require('./routes/scorecardRoutes');
+  const draftRoutes = require('./routes/draftRoutes');
 
   // System Status route
   app.get('/api/status', (req, res) => {
@@ -65,6 +66,7 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes');
   app.use('/api/payments', paymentRoutes);
   app.use('/api/tactics', tacticRoutes);
   app.use('/api/scorecards', scorecardRoutes);
+  app.use('/api/drafts', draftRoutes);
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT,'0.0.0.0', () => console.log(`Server running on port ${PORT}`));
