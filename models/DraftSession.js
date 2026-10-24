@@ -20,7 +20,6 @@ const draftSessionSchema = new mongoose.Schema({
     },
     sport: {
         type: String,
-        enum: ['Cricket', 'Football', 'Badminton', 'Tennis', 'Universal'],
         default: 'Cricket'
     },
     turfName: {

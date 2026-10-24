@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const DraftSession = require('../models/DraftSession');
 
 // @route   POST /api/drafts
@@ -24,9 +25,12 @@ exports.saveDraftSession = async (req, res) => {
             notes
         } = req.body;
 
+        const validBookingId = (bookingId && mongoose.Types.ObjectId.isValid(bookingId)) ? bookingId : null;
+        const validSessionId = (_id && mongoose.Types.ObjectId.isValid(_id)) ? _id : null;
+
         const payload = {
             userId: req.user._id,
-            bookingId: bookingId || null,
+            bookingId: validBookingId,
             sport: sport || 'Cricket',
             turfName: turfName || 'Arena Pro Turf',
             date: date || new Date().toISOString().split('T')[0],
@@ -44,15 +48,15 @@ exports.saveDraftSession = async (req, res) => {
         };
 
         let session;
-        if (_id) {
+        if (validSessionId) {
             session = await DraftSession.findOneAndUpdate(
-                { _id, userId: req.user._id },
+                { _id: validSessionId, userId: req.user._id },
                 { $set: payload },
                 { new: true, runValidators: true }
             );
-        } else if (bookingId) {
+        } else if (validBookingId) {
             session = await DraftSession.findOneAndUpdate(
-                { bookingId, userId: req.user._id },
+                { bookingId: validBookingId, userId: req.user._id },
                 { $set: payload },
                 { new: true, upsert: true, runValidators: true }
             );
